@@ -73,7 +73,7 @@
         
         let currentPin = "";
         let currentType = "支出";
-        let serverCategories = { "支出": [], "収入": [] }; // スプレッドシートから受け取る項目用
+        let serverCategories = { "支出": [], "収入": [] }; 
 
         const authBox = document.getElementById('auth-box');
         const appBox = document.getElementById('app-box');
@@ -91,26 +91,31 @@
         const historyList = document.getElementById('history-list');
         const loadingStatus = document.getElementById('loading-status');
 
-        // スプレッドシートから取得した項目を選択メニューに反映する関数
+        // 安全にドロップダウンを更新する処理
         function updateCategoryOptions() {
             categorySelect.innerHTML = "";
-            const list = serverCategories[currentType] || [];
+            const list = (serverCategories && serverCategories[currentType]) ? serverCategories[currentType] : [];
             
             if(list.length === 0) {
                 const opt = document.createElement('option');
                 opt.value = "その他";
-                opt.innerText = "その他 (項目未設定)";
+                opt.innerText = "その他";
                 categorySelect.appendChild(opt);
                 return;
             }
 
             list.forEach(cat => {
-                const opt = document.createElement('option');
-                opt.value = cat;
-                opt.innerText = cat;
-                categorySelect.appendChild(opt);
+                if(cat) {
+                    const opt = document.createElement('option');
+                    opt.value = cat;
+                    opt.innerText = cat;
+                    categorySelect.appendChild(opt);
+                }
             });
         }
+
+        // 初期状態で一度空出ししておく（真っ白防止）
+        updateCategoryOptions();
 
         btnExpense.addEventListener('click', () => {
             currentType = "支出";
@@ -126,7 +131,7 @@
             updateCategoryOptions();
         });
 
-        // 🔑 ログイン処理
+        // 🔑 ログイン
         loginBtn.addEventListener('click', async () => {
             const pin = pinInput.value;
             if (!pin) return;
@@ -140,7 +145,10 @@
                 
                 if (result.status === "success") {
                     currentPin = pin;
-                    serverCategories = result.categories; // スプレッドシートの項目を保存
+                    
+                    if (result.categories) {
+                        serverCategories = result.categories;
+                    }
                     
                     authBox.style.display = "none";
                     appBox.style.display = "block";
@@ -154,19 +162,20 @@
                     loginBtn.disabled = false;
                 }
             } catch (e) {
-                authError.innerText = "サーバー接続に失敗しました。";
+                authError.innerText = "データ読み込みエラー。スプレッドシートのデプロイを確認してください。";
                 loginBtn.disabled = false;
+                console.error(e);
             }
         });
 
-        // 🔄 最新データと最新項目の同期取得
+        // 🔄 最新同期
         async function fetchLatestData() {
             loadingStatus.style.display = "block";
             try {
                 const response = await fetch(`${API_URL}?password=${currentPin}`);
                 const result = await response.json();
-                if (result.status === "success") {
-                    serverCategories = result.categories; // 項目マスターも常に最新にする
+                if (result.status === "success" && result.categories) {
+                    serverCategories = result.categories; 
                     updateCategoryOptions();
                     updateUI(result.records);
                 }
@@ -196,7 +205,7 @@
 
                 li.innerHTML = `
                     <div>
-                        <strong style="font-size:15px;">[${r.category}]</strong>
+                        <strong style="font-size:15px;">[${r.category || 'その他'}]</strong>
                         <div style="margin-top: 4px; min-height: 14px;">${metaText}</div>
                         <span style="font-size:10px; color:#aaa; display:block; margin-top:2px;">${r.date}</span>
                     </div> 
@@ -208,7 +217,7 @@
             });
         }
 
-        // 📝 送信処理
+        // 📝 送信
         addBtn.addEventListener('click', async () => {
             const amount = amountInput.value;
             const category = categorySelect.value;
