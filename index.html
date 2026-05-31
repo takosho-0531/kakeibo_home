@@ -3,63 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家族の共有家計簿 (安全同期版)</title>
+    <title>家計簿</title>
     <style>
         body { font-family: sans-serif; background-color: #f0f4f8; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; box-sizing: border-box; }
         .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; display: none; }
         .auth-container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 320px; text-align: center; }
-        h1 { text-align: center; color: #333; font-size: 22px; margin-top: 0; }
-        h2 { color: #555; font-size: 18px; margin-top: 20px; }
-        .form-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        h1 { text-align: center; color: #333; font-size: 24px; margin-top: 0; font-weight: bold; }
+        h2 { color: #555; font-size: 18px; margin-top: 20px; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
+        .form-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
         input, select, button { padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; width: 100%; }
         input:focus, select:focus { border-color: #007bff; outline: none; }
-        button { background-color: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.2s; }
-        button:hover { background-color: #0056b3; }
+        
+        /* 支出・収入切り替えタブ */
+        .type-selector { display: flex; border: 1px solid #ccc; border-radius: 6px; overflow: hidden; margin-bottom: 5px; }
+        .type-btn { background: #eee; color: #555; border: none; border-radius: 0; cursor: pointer; font-weight: normal; padding: 12px; font-size: 16px; width: 50%; }
+        .type-btn.active-ex { background-color: #dc3545; color: white; font-weight: bold; } /* 支出：赤 */
+        .type-btn.active-in { background-color: #28a745; color: white; font-weight: bold; } /* 収入：緑 */
+        
+        button.submit-btn { background-color: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 5px; }
+        button.submit-btn:hover { background-color: #0056b3; }
         button:disabled { background-color: #ccc; cursor: not-allowed; }
-        ul { list-style: none; padding: 0; margin: 0; max-height: 250px; overflow-y: auto; }
-        li { background: #f9f9f9; padding: 10px; margin-bottom: 5px; border-radius: 6px; display: flex; justify-content: space-between; border-left: 5px solid #007bff; font-size: 14px; }
+        
+        ul { list-style: none; padding: 0; margin: 0; max-height: 280px; overflow-y: auto; }
+        li { background: #f9f9f9; padding: 12px; margin-bottom: 6px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; border-left: 6px solid #ccc; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        li.ex-item { border-left-color: #dc3545; } /* 支出マーク */
+        li.in-item { border-left-color: #28a745; } /* 収入マーク */
+        
         .loading { font-size: 14px; color: #666; text-align: center; display: none; margin-bottom: 10px; }
         .error-msg { color: red; font-size: 14px; margin-top: 10px; }
+        .badge-loc { background: #e2e8f0; color: #4a5568; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: normal; margin-right: 4px; }
+        .text-notes { color: #718096; font-size: 12px; italic; display: block; margin-top: 2px; }
     </style>
 </head>
 <body>
 
     <div id="auth-box" class="auth-container">
-        <h1>👪 家族の家計簿<br><span style="font-size:14px; color:#666;">セキュリティ認証</span></h1>
-        <p style="font-size: 14px; color: #555;">家族共通のPINコードを入れてね</p>
+        <h1>🔒 行動認証</h1>
         <div class="form-group">
-            <input type="password" id="pin-input" inputmode="numeric" pattern="[0-digit]*" placeholder="4桁の数字" maxlength="4" style="text-align: center; font-size: 24px; letter-spacing: 5px;">
-            <button id="login-btn">入室する</button>
+            <input type="password" id="pin-input" inputmode="numeric" placeholder="PINコード" maxlength="4" style="text-align: center; font-size: 24px; letter-spacing: 5px;">
+            <button id="login-btn" class="submit-btn">入室する</button>
             <div id="auth-error" class="error-msg"></div>
         </div>
     </div>
 
     <div id="app-box" class="container">
-        <h1>👪 家族の共有家計簿</h1>
+        <h1>📝 家計簿</h1>
+        
+        <div class="type-selector">
+            <button type="button" id="btn-expense" class="type-btn active-ex">支出</button>
+            <button type="button" id="btn-income" class="type-btn">収入</button>
+        </div>
+
         <div class="form-group">
-            <select id="user">
-                <option value="パパ">パパ</option>
-                <option value="ママ">ママ</option>
-            </select>
+            <select id="category"></select>
+            
             <input type="number" id="amount" placeholder="金額 (円)" inputmode="numeric">
-            <select id="category">
-                <option value="食費">食費</option>
-                <option value="日用品">日用品</option>
-                <option value="その他">その他</option>
-            </select>
-            <button id="add-btn">データを同期して記録</button>
+            <input type="text" id="location" placeholder="場所（例: スーパー、Amazon）">
+            <input type="text" id="notes" placeholder="メモ・備考（自由入力）">
+            
+            <button id="add-btn" class="submit-btn">データを同期して記録</button>
         </div>
         
-        <h2>履歴 (リアルタイム共有)</h2>
-        <div id="loading-status" class="loading">データを読み込み中...</div>
+        <h2>履歴一覧</h2>
+        <div id="loading-status" class="loading">データを最新に同期中...</div>
         <ul id="history-list"></ul>
     </div>
 
     <script>
-        // 🔗 あなたが教えてくれたGoogleの中継役のURLです
+        // 🔗 あなた専用のGoogle Apps ScriptのURL
         const API_URL = "https://script.google.com/macros/s/AKfycbw9M0Y5blppK97M_HtfCYbSHzJwpOimSkJmVuGB8ARMtynrG_CEp3Lgtdh_kpqdKBS5GQ/exec";
         
         let currentPin = "";
+        let currentType = "支出"; // デフォルトは支出
+
+        // 項目の一覧（自由に変更・追加できます）
+        const categories = {
+            "支出": ["食費", "日用品", "交際費", "交通費", "衣服・美容", "光熱費・通信費", "その他"],
+            "収入": ["給与", "賞与", "副収入", "その他"]
+        };
 
         const authBox = document.getElementById('auth-box');
         const appBox = document.getElementById('app-box');
@@ -67,22 +88,52 @@
         const loginBtn = document.getElementById('login-btn');
         const authError = document.getElementById('auth-error');
 
-        const amountInput = document.getElementById('amount');
+        const btnExpense = document.getElementById('btn-expense');
+        const btnIncome = document.getElementById('btn-income');
         const categorySelect = document.getElementById('category');
-        const userInput = document.getElementById('user');
+        const amountInput = document.getElementById('amount');
+        const locationInput = document.getElementById('location');
+        const notesInput = document.getElementById('notes');
         const addBtn = document.getElementById('add-btn');
         const historyList = document.getElementById('history-list');
         const loadingStatus = document.getElementById('loading-status');
 
-        // 🔑 ログインボタンを押したとき
+        // 選択されているタイプ(支出/収入)に合わせて項目のメニューを入れ替える関数
+        function updateCategoryOptions() {
+            categorySelect.innerHTML = "";
+            categories[currentType].forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.innerText = cat;
+                categorySelect.appendChild(opt);
+            });
+        }
+        updateCategoryOptions(); // 起動時に実行
+
+        // 「支出」タブがクリックされたとき
+        btnExpense.addEventListener('click', () => {
+            currentType = "支出";
+            btnExpense.classList.add('active-ex');
+            btnIncome.classList.remove('active-in');
+            updateCategoryOptions();
+        });
+
+        // 「収入」タブがクリックされたとき
+        btnIncome.addEventListener('click', () => {
+            currentType = "収入";
+            btnIncome.classList.add('active-in');
+            btnExpense.classList.remove('active-ex');
+            updateCategoryOptions();
+        });
+
+        // 🔑 ログインボタンを押したときの処理
         loginBtn.addEventListener('click', async () => {
             const pin = pinInput.value;
             if (!pin) return;
             
-            authError.innerText = "認証中...";
+            authError.innerText = "セキュリティ検証中...";
             loginBtn.disabled = true;
 
-            // Googleからデータを取れるかテスト（PINコードのチェックを兼ねる）
             try {
                 const response = await fetch(`${API_URL}?password=${pin}`);
                 const result = await response.json();
@@ -95,16 +146,16 @@
                     document.body.style.paddingTop = "20px";
                     updateUI(result.records);
                 } else {
-                    authError.innerText = "PINコードが違います。";
+                    authError.innerText = "PINコードが正しくありません。";
                     loginBtn.disabled = false;
                 }
             } catch (e) {
-                authError.innerText = "通信エラーが発生しました。";
+                authError.innerText = "サーバー接続に失敗しました。";
                 loginBtn.disabled = false;
             }
         });
 
-        // 🔄 スプレッドシートから最新データを読み直す
+        // 🔄 最新データの同期取得
         async function fetchLatestData() {
             loadingStatus.style.display = "block";
             try {
@@ -114,59 +165,86 @@
                     updateUI(result.records);
                 }
             } catch (e) {
-                console.error("データ取得エラー", e);
+                console.error("データの読み込みに失敗しました", e);
             }
             loadingStatus.style.display = "none";
         }
 
-        // 📱 画面の履歴一覧を書き換える
+        // 📱 画面下部の履歴リストを描画する
         function updateUI(records) {
             historyList.innerHTML = '';
             if(!records || records.length === 0) {
-                historyList.innerHTML = '<li style="color:#999; justify-content:center;">まだ記録がありません</li>';
+                historyList.innerHTML = '<li style="color:#999; justify-content:center;">データがまだありません</li>';
                 return;
             }
-            // 新しい順に並び替えて表示
-            const reversed = [...records].reverse();
-            reversed.forEach(r => {
+            
+            records.forEach(r => {
                 const li = document.createElement('li');
-                li.innerHTML = `<div><strong>[${r.user}]</strong> ${r.category}<br><span style="font-size:11px; color:#999;">${r.date}</span></div> <span style="font-weight:bold; font-size:16px;">${Number(r.amount).toLocaleString()} 円</span>`;
+                li.className = r.type === "支出" ? "ex-item" : "in-item";
+                
+                // 場所（📍マーク）とメモの表示用テキストを整形
+                let metaText = "";
+                if (r.location) {
+                    metaText += `<span class="badge-loc">📍 ${r.location}</span>`;
+                }
+                if (r.notes) {
+                    metaText += `<span class="text-notes">💬 ${r.notes}</span>`;
+                }
+
+                const prefix = r.type === "支出" ? "-" : "+";
+                const priceColor = r.type === "支出" ? "#dc3545" : "#28a745";
+
+                li.innerHTML = `
+                    <div>
+                        <strong style="font-size:15px;">[${r.category}]</strong>
+                        <div style="margin-top: 4px; min-height: 14px;">${metaText}</div>
+                        <span style="font-size:10px; color:#aaa; display:block; margin-top:2px;">${r.date}</span>
+                    </div> 
+                    <span style="font-weight:bold; font-size:18px; color: ${priceColor}; white-space: nowrap;">
+                        ${prefix}${Number(r.amount).toLocaleString()} 円
+                    </span>
+                `;
                 historyList.appendChild(li);
             });
         }
 
-        // 📝 データをスプレッドシートに送信して記録する
+        // 📝 データを同期してスプレッドシートへ送信
         addBtn.addEventListener('click', async () => {
             const amount = amountInput.value;
             const category = categorySelect.value;
-            const user = userInput.value;
+            const location = locationInput.value;
+            const notes = notesInput.value;
             
             if (!amount) return alert('金額を入力してください');
             
             addBtn.disabled = true;
-            addBtn.innerText = "安全に同期中...";
+            addBtn.innerText = "暗号化同期中...";
             
             try {
                 const response = await fetch(API_URL, {
                     method: "POST",
                     body: JSON.stringify({
                         password: currentPin,
-                        user: user,
+                        type: currentType,       // "支出" または "収入"
+                        category: category,
                         amount: amount,
-                        category: category
+                        location: location,
+                        notes: notes
                     })
                 });
                 const result = await response.json();
                 
                 if (result.status === "success") {
                     amountInput.value = '';
-                    // 送信に成功したら最新データを再読み込み
+                    locationInput.value = '';
+                    notesInput.value = '';
+                    // 完了後に自動で一覧を再読み込み
                     await fetchLatestData();
                 } else {
                     alert(result.message);
                 }
             } catch (e) {
-                alert("送信エラーが発生しました。通信環境を確認してください。");
+                alert("送信中にエラーが発生しました。");
             }
             
             addBtn.disabled = false;
