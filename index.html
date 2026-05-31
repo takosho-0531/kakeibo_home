@@ -1,70 +1,177 @@
-# kakeibo_home
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家族の共有家計簿</title>
+    <title>家族の共有家計簿 (安全同期版)</title>
     <style>
-        body { font-family: sans-serif; background-color: #f0f4f8; padding: 20px; display: flex; justify-content: center; }
-        .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        h1 { text-align: center; color: #333; font-size: 22px; }
+        body { font-family: sans-serif; background-color: #f0f4f8; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; box-sizing: border-box; }
+        .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; display: none; }
+        .auth-container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 320px; text-align: center; }
+        h1 { text-align: center; color: #333; font-size: 22px; margin-top: 0; }
+        h2 { color: #555; font-size: 18px; margin-top: 20px; }
         .form-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-        input, select, button { padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; }
-        button { background-color: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; }
-        ul { list-style: none; padding: 0; }
-        li { background: #f9f9f9; padding: 10px; margin-bottom: 5px; border-radius: 6px; display: flex; justify-content: space-between; border-left: 5px solid #007bff; }
+        input, select, button { padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; width: 100%; }
+        input:focus, select:focus { border-color: #007bff; outline: none; }
+        button { background-color: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        ul { list-style: none; padding: 0; margin: 0; max-height: 250px; overflow-y: auto; }
+        li { background: #f9f9f9; padding: 10px; margin-bottom: 5px; border-radius: 6px; display: flex; justify-content: space-between; border-left: 5px solid #007bff; font-size: 14px; }
+        .loading { font-size: 14px; color: #666; text-align: center; display: none; margin-bottom: 10px; }
+        .error-msg { color: red; font-size: 14px; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <div class="container">
+
+    <div id="auth-box" class="auth-container">
+        <h1>👪 家族の家計簿<br><span style="font-size:14px; color:#666;">セキュリティ認証</span></h1>
+        <p style="font-size: 14px; color: #555;">家族共通のPINコードを入れてね</p>
+        <div class="form-group">
+            <input type="password" id="pin-input" inputmode="numeric" pattern="[0-digit]*" placeholder="4桁の数字" maxlength="4" style="text-align: center; font-size: 24px; letter-spacing: 5px;">
+            <button id="login-btn">入室する</button>
+            <div id="auth-error" class="error-msg"></div>
+        </div>
+    </div>
+
+    <div id="app-box" class="container">
         <h1>👪 家族の共有家計簿</h1>
         <div class="form-group">
             <select id="user">
                 <option value="パパ">パパ</option>
                 <option value="ママ">ママ</option>
             </select>
-            <input type="number" id="amount" placeholder="金額 (円)">
+            <input type="number" id="amount" placeholder="金額 (円)" inputmode="numeric">
             <select id="category">
                 <option value="食費">食費</option>
                 <option value="日用品">日用品</option>
                 <option value="その他">その他</option>
             </select>
-            <button id="add-btn">記録する</button>
+            <button id="add-btn">データを同期して記録</button>
         </div>
-        <h2>履歴</h2>
+        
+        <h2>履歴 (リアルタイム共有)</h2>
+        <div id="loading-status" class="loading">データを読み込み中...</div>
         <ul id="history-list"></ul>
     </div>
 
     <script>
+        // 🔗 あなたが教えてくれたGoogleの中継役のURLです
+        const API_URL = "https://script.google.com/macros/s/AKfycbw9M0Y5blppK97M_HtfCYbSHzJwpOimSkJmVuGB8ARMtynrG_CEp3Lgtdh_kpqdKBS5GQ/exec";
+        
+        let currentPin = "";
+
+        const authBox = document.getElementById('auth-box');
+        const appBox = document.getElementById('app-box');
+        const pinInput = document.getElementById('pin-input');
+        const loginBtn = document.getElementById('login-btn');
+        const authError = document.getElementById('auth-error');
+
         const amountInput = document.getElementById('amount');
         const categorySelect = document.getElementById('category');
         const userInput = document.getElementById('user');
         const addBtn = document.getElementById('add-btn');
         const historyList = document.getElementById('history-list');
+        const loadingStatus = document.getElementById('loading-status');
 
-        let records = JSON.parse(localStorage.getItem('family_kakeibo')) || [];
+        // 🔑 ログインボタンを押したとき
+        loginBtn.addEventListener('click', async () => {
+            const pin = pinInput.value;
+            if (!pin) return;
+            
+            authError.innerText = "認証中...";
+            loginBtn.disabled = true;
 
-        function updateUI() {
+            // Googleからデータを取れるかテスト（PINコードのチェックを兼ねる）
+            try {
+                const response = await fetch(`${API_URL}?password=${pin}`);
+                const result = await response.json();
+                
+                if (result.status === "success") {
+                    currentPin = pin;
+                    authBox.style.display = "none";
+                    appBox.style.display = "block";
+                    document.body.style.alignItems = "flex-start";
+                    document.body.style.paddingTop = "20px";
+                    updateUI(result.records);
+                } else {
+                    authError.innerText = "PINコードが違います。";
+                    loginBtn.disabled = false;
+                }
+            } catch (e) {
+                authError.innerText = "通信エラーが発生しました。";
+                loginBtn.disabled = false;
+            }
+        });
+
+        // 🔄 スプレッドシートから最新データを読み直す
+        async function fetchLatestData() {
+            loadingStatus.style.display = "block";
+            try {
+                const response = await fetch(`${API_URL}?password=${currentPin}`);
+                const result = await response.json();
+                if (result.status === "success") {
+                    updateUI(result.records);
+                }
+            } catch (e) {
+                console.error("データ取得エラー", e);
+            }
+            loadingStatus.style.display = "none";
+        }
+
+        // 📱 画面の履歴一覧を書き換える
+        function updateUI(records) {
             historyList.innerHTML = '';
-            records.forEach(r => {
+            if(!records || records.length === 0) {
+                historyList.innerHTML = '<li style="color:#999; justify-content:center;">まだ記録がありません</li>';
+                return;
+            }
+            // 新しい順に並び替えて表示
+            const reversed = [...records].reverse();
+            reversed.forEach(r => {
                 const li = document.createElement('li');
-                li.innerHTML = `<span>[${r.user}] ${r.category}</span> <span>${Number(r.amount).toLocaleString()} 円</span>`;
+                li.innerHTML = `<div><strong>[${r.user}]</strong> ${r.category}<br><span style="font-size:11px; color:#999;">${r.date}</span></div> <span style="font-weight:bold; font-size:16px;">${Number(r.amount).toLocaleString()} 円</span>`;
                 historyList.appendChild(li);
             });
         }
 
-        addBtn.addEventListener('click', () => {
+        // 📝 データをスプレッドシートに送信して記録する
+        addBtn.addEventListener('click', async () => {
             const amount = amountInput.value;
             const category = categorySelect.value;
             const user = userInput.value;
-            if (!amount) return alert('金額を入れてね');
-            records.push({ amount, category, user });
-            localStorage.setItem('family_kakeibo', JSON.stringify(records));
-            amountInput.value = '';
-            updateUI();
+            
+            if (!amount) return alert('金額を入力してください');
+            
+            addBtn.disabled = true;
+            addBtn.innerText = "安全に同期中...";
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        password: currentPin,
+                        user: user,
+                        amount: amount,
+                        category: category
+                    })
+                });
+                const result = await response.json();
+                
+                if (result.status === "success") {
+                    amountInput.value = '';
+                    // 送信に成功したら最新データを再読み込み
+                    await fetchLatestData();
+                } else {
+                    alert(result.message);
+                }
+            } catch (e) {
+                alert("送信エラーが発生しました。通信環境を確認してください。");
+            }
+            
+            addBtn.disabled = false;
+            addBtn.innerText = "データを同期して記録";
         });
-        updateUI();
     </script>
 </body>
 </html>
