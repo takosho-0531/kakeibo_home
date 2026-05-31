@@ -55,11 +55,9 @@
 
         <div class="form-group">
             <select id="category"></select>
-            
             <input type="number" id="amount" placeholder="金額 (円)" inputmode="numeric">
             <input type="text" id="location" placeholder="場所（例: スーパー、Amazon）">
             <input type="text" id="notes" placeholder="メモ・備考（自由入力）">
-            
             <button id="add-btn" class="submit-btn">データを同期して記録</button>
         </div>
         
@@ -69,7 +67,8 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbw9M0Y5blppK97M_HtfCYbSHzJwpOimSkJmVuGB8ARMtynrG_CEp3Lgtdh_kpqdKBS5GQ/exec";
+        // ⚠️ ここをご自身の本当のGASのURLに書き換えてください！
+        const API_URL = "ここにあなたのGASのURLを入れてください";
         
         let currentPin = "";
         let currentType = "支出";
@@ -91,7 +90,6 @@
         const historyList = document.getElementById('history-list');
         const loadingStatus = document.getElementById('loading-status');
 
-        // 安全にドロップダウンを更新する処理
         function updateCategoryOptions() {
             categorySelect.innerHTML = "";
             const list = (serverCategories && serverCategories[currentType]) ? serverCategories[currentType] : [];
@@ -114,7 +112,6 @@
             });
         }
 
-        // 初期状態で一度空出ししておく（真っ白防止）
         updateCategoryOptions();
 
         btnExpense.addEventListener('click', () => {
@@ -131,7 +128,6 @@
             updateCategoryOptions();
         });
 
-        // 🔑 ログイン
         loginBtn.addEventListener('click', async () => {
             const pin = pinInput.value;
             if (!pin) return;
@@ -145,10 +141,7 @@
                 
                 if (result.status === "success") {
                     currentPin = pin;
-                    
-                    if (result.categories) {
-                        serverCategories = result.categories;
-                    }
+                    if (result.categories) serverCategories = result.categories;
                     
                     authBox.style.display = "none";
                     appBox.style.display = "block";
@@ -162,13 +155,11 @@
                     loginBtn.disabled = false;
                 }
             } catch (e) {
-                authError.innerText = "データ読み込みエラー。スプレッドシートのデプロイを確認してください。";
+                authError.innerText = "接続エラー。URLが正しいか確認してください。";
                 loginBtn.disabled = false;
-                console.error(e);
             }
         });
 
-        // 🔄 最新同期
         async function fetchLatestData() {
             loadingStatus.style.display = "block";
             try {
@@ -217,7 +208,6 @@
             });
         }
 
-        // 📝 送信
         addBtn.addEventListener('click', async () => {
             const amount = amountInput.value;
             const category = categorySelect.value;
