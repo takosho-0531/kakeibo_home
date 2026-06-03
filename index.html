@@ -3,28 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家計簿</title>
+    <title>プレミアム家計簿</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: sans-serif; background-color: #f0f4f8; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; box-sizing: border-box; }
-        .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; display: none; }
+        .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 440px; display: none; }
         .auth-container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 320px; text-align: center; }
         h1 { text-align: center; color: #333; font-size: 24px; margin-top: 0; font-weight: bold; }
-        h2 { color: #555; font-size: 18px; margin-top: 20px; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
+        h2 { color: #555; font-size: 18px; margin-top: 25px; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
         .form-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
         label { font-size: 13px; color: #666; margin-bottom: -8px; font-weight: bold; }
         input, select, button { padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; width: 100%; }
         input:focus, select:focus { border-color: #007bff; outline: none; }
         
-        .type-selector { display: flex; border: 1px solid #ccc; border-radius: 6px; overflow: hidden; margin-bottom: 5px; }
+        .type-selector { display: flex; border: 1px solid #ccc; border-radius: 6px; overflow: hidden; margin-bottom: 15px; }
         .type-btn { background: #eee; color: #555; border: none; border-radius: 0; cursor: pointer; padding: 12px; font-size: 16px; width: 50%; }
         .type-btn.active-ex { background-color: #dc3545; color: white; font-weight: bold; }
         .type-btn.active-in { background-color: #28a745; color: white; font-weight: bold; }
+        
+        .receipt-zone { background: #f8fafc; border: 2px dashed #cbd5e1; padding: 15px; text-align: center; border-radius: 8px; cursor: pointer; margin-bottom: 10px; }
+        .receipt-zone:hover { background: #f1f5f9; }
+        .receipt-icon { font-size: 28px; display: block; margin-bottom: 5px; }
+        .receipt-text { font-size: 13px; color: #64748b; font-weight: bold; }
+        
+        .chart-container { background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+        .chart-tabs { display: flex; gap: 5px; margin-bottom: 10px; justify-content: center; }
+        .chart-tab-btn { padding: 6px 12px; font-size: 12px; border: 1px solid #cbd5e1; background: white; border-radius: 20px; cursor: pointer; width: auto; }
+        .chart-tab-btn.active { background: #475569; color: white; border-color: #475569; font-weight: bold; }
         
         button.submit-btn { background-color: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 5px; }
         button.submit-btn:hover { background-color: #0056b3; }
         button:disabled { background-color: #ccc; cursor: not-allowed; }
         
-        ul { list-style: none; padding: 0; margin: 0; max-height: 280px; overflow-y: auto; }
+        ul { list-style: none; padding: 0; margin: 0; max-height: 250px; overflow-y: auto; }
         li { background: #f9f9f9; padding: 12px; margin-bottom: 6px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; border-left: 6px solid #ccc; }
         li.ex-item { border-left-color: #dc3545; }
         li.in-item { border-left-color: #28a745; }
@@ -54,6 +65,12 @@
             <button type="button" id="btn-income" class="type-btn">収入</button>
         </div>
 
+        <div id="receipt-area" class="receipt-zone">
+            <span class="receipt-icon" id="receipt-status-icon">📸</span>
+            <span class="receipt-text" id="receipt-status-text">レシートを撮影して自動入力</span>
+            <input type="file" id="receipt-file" accept="image/*" capture="environment" style="display: none;">
+        </div>
+
         <div class="form-group">
             <label for="date-input">📅 日付</label>
             <input type="date" id="date-input">
@@ -73,18 +90,29 @@
             <button id="add-btn" class="submit-btn">データを同期して記録</button>
         </div>
         
+        <h2>📊 収支レポート</h2>
+        <div class="chart-container">
+            <div class="chart-tabs">
+                <button class="chart-tab-btn active" id="tab-month">今月</button>
+                <button class="chart-tab-btn" id="tab-year">今年</button>
+            </div>
+            <canvas id="myChart" width="400" height="300"></canvas>
+        </div>
+
         <h2>履歴一覧</h2>
         <div id="loading-status" class="loading">データを最新に同期中...</div>
         <ul id="history-list"></ul>
     </div>
 
     <script>
-        // 🔗 あなたのGASのURLをあらかじめ設定しておきました
         const API_URL = "https://script.google.com/macros/s/AKfycbw9M0Y5blppK97M_HtfCYbSHzJwpOimSkJmVuGB8ARMtynrG_CEp3Lgtdh_kpqdKBS5GQ/exec";
         
         let currentPin = "";
         let currentType = "支出";
         let serverCategories = { "支出": [], "収入": [] }; 
+        let globalRecords = [];
+        let myChart = null;
+        let currentChartPeriod = "month";
 
         const authBox = document.getElementById('auth-box');
         const appBox = document.getElementById('app-box');
@@ -94,6 +122,10 @@
 
         const btnExpense = document.getElementById('btn-expense');
         const btnIncome = document.getElementById('btn-income');
+        const receiptArea = document.getElementById('receipt-area');
+        const receiptFile = document.getElementById('receipt-file');
+        const receiptStatusIcon = document.getElementById('receipt-status-icon');
+        const receiptStatusText = document.getElementById('receipt-status-text');
         const dateInput = document.getElementById('date-input');
         const categorySelect = document.getElementById('category');
         const amountInput = document.getElementById('amount');
@@ -102,8 +134,10 @@
         const addBtn = document.getElementById('add-btn');
         const historyList = document.getElementById('history-list');
         const loadingStatus = document.getElementById('loading-status');
+        
+        const tabMonth = document.getElementById('tab-month');
+        const tabYear = document.getElementById('tab-year');
 
-        // 今日の日付をカレンダーの初期値としてセットする関数
         function setTodayDate() {
             const today = new Date();
             const yyyy = today.getFullYear();
@@ -141,14 +175,91 @@
             currentType = "支出";
             btnExpense.classList.add('active-ex');
             btnIncome.classList.remove('active-in');
+            receiptArea.style.display = "block";
             updateCategoryOptions();
+            renderChart();
         });
 
         btnIncome.addEventListener('click', () => {
             currentType = "収入";
             btnIncome.classList.add('active-in');
             btnExpense.classList.remove('active-ex');
+            receiptArea.style.display = "none";
             updateCategoryOptions();
+            renderChart();
+        });
+
+        receiptArea.addEventListener('click', () => {
+            if (receiptStatusText.innerText.includes("解析中")) return;
+            receiptFile.click();
+        });
+
+        // 👁️ 【ガチ機能】選択された画像をBase64に変換してGASのOCRに送る処理
+        receiptFile.addEventListener('change', (e) => {
+            if (e.target.files.length === 0) return;
+            const file = e.target.files[0];
+            
+            // 画面表示を「解析中」に変える
+            receiptStatusIcon.innerText = "⏳";
+            receiptStatusText.innerText = "本物のAIが文字を解析中...";
+            receiptArea.style.background = "#f1f5f9";
+            
+            const reader = new FileReader();
+            reader.onload = async function(event) {
+                const base64Image = event.target.result;
+                
+                try {
+                    // GASに画像をPOST送信してOCRにかける
+                    const response = await fetch(API_URL, {
+                        method: "POST",
+                        body: JSON.stringify({
+                            password: currentPin,
+                            action: "analyzeReceipt",
+                            imageBlob: base64Image
+                        })
+                    });
+                    const result = await response.json();
+                    
+                    if (result.status === "success") {
+                        // GASが読み取った本物のデータをフォームに入れる！
+                        if (result.amount) amountInput.value = result.amount;
+                        if (result.location) locationInput.value = result.location;
+                        if (result.notes) notesInput.value = result.notes;
+                        
+                        // 「食費」というカテゴリーがあれば自動選択
+                        const options = Array.from(categorySelect.options);
+                        const foodOpt = options.find(opt => opt.value.includes("食費"));
+                        if (foodOpt) categorySelect.value = foodOpt.value;
+                        
+                        alert("✨ 解析成功！金額と店名を自動入力しました。");
+                    } else {
+                        alert("文字の読み取りに失敗しました。手動で入力してください。");
+                    }
+                } catch(err) {
+                    alert("通信エラーが発生しました。");
+                    console.error(err);
+                } finally {
+                    // 表示を元に戻す
+                    receiptStatusIcon.innerText = "📸";
+                    receiptStatusText.innerText = "レシートを撮影して自動入力";
+                    receiptArea.style.background = "#f8fafc";
+                    receiptFile.value = ""; // リセット
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+
+        tabMonth.addEventListener('click', () => {
+            currentChartPeriod = "month";
+            tabMonth.classList.add('active');
+            tabYear.classList.remove('active');
+            renderChart();
+        });
+        tabYear.addEventListener('click', () => {
+            currentChartPeriod = "year";
+            tabYear.classList.add('active');
+            tabMonth.classList.remove('active');
+            renderChart();
         });
 
         loginBtn.addEventListener('click', async () => {
@@ -172,7 +283,8 @@
                     document.body.style.paddingTop = "20px";
                     
                     updateCategoryOptions();
-                    updateUI(result.records);
+                    globalRecords = result.records || [];
+                    updateUI(globalRecords);
                 } else {
                     authError.innerText = "PINコードが正しくありません。";
                     loginBtn.disabled = false;
@@ -191,7 +303,8 @@
                 if (result.status === "success" && result.categories) {
                     serverCategories = result.categories; 
                     updateCategoryOptions();
-                    updateUI(result.records);
+                    globalRecords = result.records || [];
+                    updateUI(globalRecords);
                 }
             } catch (e) {
                 console.error(e);
@@ -199,8 +312,82 @@
             loadingStatus.style.display = "none";
         }
 
+        function renderChart() {
+            const ctx = document.getElementById('myChart').getContext('2d');
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth() + 1;
+
+            const filtered = globalRecords.filter(r => {
+                if (r.type !== currentType) return false;
+                const parts = r.date.split('/');
+                if (parts.length < 3) return false;
+                const rYear = parseInt(parts[0]);
+                const rMonth = parseInt(parts[1]);
+
+                if (currentChartPeriod === "month") {
+                    return rYear === currentYear && rMonth === currentMonth;
+                } else {
+                    return rYear === currentYear;
+                }
+            });
+
+            const totals = {};
+            filtered.forEach(r => {
+                const cat = r.category || "その他";
+                totals[cat] = (totals[cat] || 0) + Number(r.amount);
+            });
+
+            const labels = Object.keys(totals);
+            const dataValues = Object.values(totals);
+
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            if (labels.length === 0) {
+                myChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['データなし'],
+                        datasets: [{ data: [1], backgroundColor: ['#e2e8f0'] }]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+                });
+                return;
+            }
+
+            myChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: dataValues,
+                        backgroundColor: [
+                            '#ff6384', '#36a2eb', '#cc65fe', '#ffce56', '#4bc0c0', '#333333', '#ffa94d', '#74c0fc'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.label}: ${Number(context.raw).toLocaleString()} 円`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
         function updateUI(records) {
             historyList.innerHTML = '';
+            renderChart();
+            
             if(!records || records.length === 0) {
                 historyList.innerHTML = '<li style="color:#999; justify-content:center;">データがまだありません</li>';
                 return;
@@ -236,8 +423,6 @@
             const category = categorySelect.value;
             const location = locationInput.value;
             const notes = notesInput.value;
-            
-            // カレンダーで選ばれた日付を取得して整形（YYYY/MM/DD）
             const selectedDate = dateInput.value.replace(/-/g, '/');
             
             if (!amount) return alert('金額を入力してください');
@@ -256,7 +441,7 @@
                         amount: amount,
                         location: location,
                         notes: notes,
-                        customDate: selectedDate // 📅 選択された日付を送信
+                        customDate: selectedDate
                     })
                 });
                 const result = await response.json();
@@ -265,7 +450,7 @@
                     amountInput.value = '';
                     locationInput.value = '';
                     notesInput.value = '';
-                    setTodayDate(); // 入力後は日付を今日に戻す
+                    setTodayDate();
                     await fetchLatestData();
                 } else {
                     alert(result.message);
