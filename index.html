@@ -11,6 +11,7 @@
         h1 { text-align: center; color: #333; font-size: 24px; margin-top: 0; font-weight: bold; }
         h2 { color: #555; font-size: 18px; margin-top: 20px; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
         .form-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+        label { font-size: 13px; color: #666; margin-bottom: -8px; font-weight: bold; }
         input, select, button { padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; width: 100%; }
         input:focus, select:focus { border-color: #007bff; outline: none; }
         
@@ -54,10 +55,21 @@
         </div>
 
         <div class="form-group">
+            <label for="date-input">📅 日付</label>
+            <input type="date" id="date-input">
+
+            <label for="category">🗂️ 項目</label>
             <select id="category"></select>
+
+            <label for="amount">💰 金額</label>
             <input type="number" id="amount" placeholder="金額 (円)" inputmode="numeric">
+
+            <label for="location">📍 場所</label>
             <input type="text" id="location" placeholder="場所（例: スーパー、Amazon）">
+
+            <label for="notes">💬 メモ</label>
             <input type="text" id="notes" placeholder="メモ・備考（自由入力）">
+
             <button id="add-btn" class="submit-btn">データを同期して記録</button>
         </div>
         
@@ -67,7 +79,7 @@
     </div>
 
     <script>
-        // ⚠️ ここをご自身の本当のGASのURLに確実に書き換えてください！
+        // 🔗 あなたのGASのURLをあらかじめ設定しておきました
         const API_URL = "https://script.google.com/macros/s/AKfycbw9M0Y5blppK97M_HtfCYbSHzJwpOimSkJmVuGB8ARMtynrG_CEp3Lgtdh_kpqdKBS5GQ/exec";
         
         let currentPin = "";
@@ -82,6 +94,7 @@
 
         const btnExpense = document.getElementById('btn-expense');
         const btnIncome = document.getElementById('btn-income');
+        const dateInput = document.getElementById('date-input');
         const categorySelect = document.getElementById('category');
         const amountInput = document.getElementById('amount');
         const locationInput = document.getElementById('location');
@@ -89,6 +102,16 @@
         const addBtn = document.getElementById('add-btn');
         const historyList = document.getElementById('history-list');
         const loadingStatus = document.getElementById('loading-status');
+
+        // 今日の日付をカレンダーの初期値としてセットする関数
+        function setTodayDate() {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            dateInput.value = `${yyyy}-${mm}-${dd}`;
+        }
+        setTodayDate();
 
         function updateCategoryOptions() {
             categorySelect.innerHTML = "";
@@ -214,7 +237,11 @@
             const location = locationInput.value;
             const notes = notesInput.value;
             
+            // カレンダーで選ばれた日付を取得して整形（YYYY/MM/DD）
+            const selectedDate = dateInput.value.replace(/-/g, '/');
+            
             if (!amount) return alert('金額を入力してください');
+            if (!selectedDate) return alert('日付を入力してください');
             
             addBtn.disabled = true;
             addBtn.innerText = "暗号化同期中...";
@@ -228,7 +255,8 @@
                         category: category,
                         amount: amount,
                         location: location,
-                        notes: notes
+                        notes: notes,
+                        customDate: selectedDate // 📅 選択された日付を送信
                     })
                 });
                 const result = await response.json();
@@ -237,6 +265,7 @@
                     amountInput.value = '';
                     locationInput.value = '';
                     notesInput.value = '';
+                    setTodayDate(); // 入力後は日付を今日に戻す
                     await fetchLatestData();
                 } else {
                     alert(result.message);
