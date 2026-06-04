@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>プレミアム家計簿</title>
+    <title>プ家計簿</title>
     <!-- 📊 グラフを描画するためのChart.jsライブラリを読み込み -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -182,7 +182,8 @@
             btnIncome.classList.remove('active-in');
             receiptArea.style.display = "block";
             updateCategoryOptions();
-            renderChart();
+            // 🌟 タイプ（支出）の変更に合わせて履歴の表示を更新
+            updateUI(globalRecords);
         });
 
         btnIncome.addEventListener('click', () => {
@@ -191,7 +192,8 @@
             btnExpense.classList.remove('active-ex');
             receiptArea.style.display = "none";
             updateCategoryOptions();
-            renderChart();
+            // 🌟 タイプ（収入）の変更に合わせて履歴の表示を更新
+            updateUI(globalRecords);
         });
 
         receiptArea.addEventListener('click', () => {
@@ -398,7 +400,7 @@
             });
         }
 
-        // 🌟 履歴一覧に「[支出]」「[収入]」の文字バッジを表示して区別可能にする
+        // 🌟 履歴一覧に選択されているタイプ（支出/収入）と同じものだけを表示するようにフィルター
         function updateUI(records) {
             historyList.innerHTML = '';
             renderChart();
@@ -408,7 +410,15 @@
                 return;
             }
             
-            records.forEach(r => {
+            // 🌟 選択されている現在のタイプ（支出 または 収入）のものだけを絞り込む
+            const filteredRecords = records.filter(r => r.type === currentType);
+            
+            if(filteredRecords.length === 0) {
+                historyList.innerHTML = `<li style="color:#999; justify-content:center;">${currentType}のデータはまだありません</li>`;
+                return;
+            }
+            
+            filteredRecords.forEach(r => {
                 const li = document.createElement('li');
                 li.className = r.type === "支出" ? "ex-item" : "in-item";
                 
