@@ -1,200 +1,496 @@
-// 🔐 あなたの家計簿アプリ共通のPINコード（パスワード）を設定
-const SECRET_PIN = "1234"; 
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>プレミアム家計簿</title>
+    <!-- 📊 グラフを描画するためのChart.jsライブラリを読み込み -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: sans-serif; background-color: #f0f4f8; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; box-sizing: border-box; }
+        .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 440px; display: none; }
+        .auth-container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 320px; text-align: center; }
+        h1 { text-align: center; color: #333; font-size: 24px; margin-top: 0; font-weight: bold; }
+        h2 { color: #555; font-size: 18px; margin-top: 25px; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
+        .form-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+        label { font-size: 13px; color: #666; margin-bottom: -8px; font-weight: bold; }
+        input, select, button { padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; width: 100%; }
+        input:focus, select:focus { border-color: #007bff; outline: none; }
+        
+        .type-selector { display: flex; border: 1px solid #ccc; border-radius: 6px; overflow: hidden; margin-bottom: 15px; }
+        .type-btn { background: #eee; color: #555; border: none; border-radius: 0; cursor: pointer; padding: 12px; font-size: 16px; width: 50%; }
+        .type-btn.active-ex { background-color: #dc3545; color: white; font-weight: bold; }
+        .type-btn.active-in { background-color: #28a745; color: white; font-weight: bold; }
+        
+        .receipt-zone { background: #f8fafc; border: 2px dashed #cbd5e1; padding: 15px; text-align: center; border-radius: 8px; cursor: pointer; margin-bottom: 10px; }
+        .receipt-zone:hover { background: #f1f5f9; }
+        .receipt-icon { font-size: 28px; display: block; margin-bottom: 5px; }
+        .receipt-text { font-size: 13px; color: #64748b; font-weight: bold; }
+        
+        .chart-container { background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+        .chart-tabs { display: flex; gap: 5px; margin-bottom: 10px; justify-content: center; }
+        .chart-tab-btn { padding: 6px 12px; font-size: 12px; border: 1px solid #cbd5e1; background: white; border-radius: 20px; cursor: pointer; width: auto; }
+        .chart-tab-btn.active { background: #475569; color: white; border-color: #475569; font-weight: bold; }
+        
+        button.submit-btn { background-color: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 5px; }
+        button.submit-btn:hover { background-color: #0056b3; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        
+        ul { list-style: none; padding: 0; margin: 0; max-height: 250px; overflow-y: auto; }
+        li { background: #f9f9f9; padding: 12px; margin-bottom: 6px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; border-left: 6px solid #ccc; }
+        li.ex-item { border-left-color: #dc3545; }
+        li.in-item { border-left-color: #28a745; }
+        
+        .loading { font-size: 14px; color: #666; text-align: center; display: none; margin-bottom: 10px; }
+        .error-msg { color: red; font-size: 14px; margin-top: 10px; }
+        .badge-type { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; color: white; margin-right: 4px; display: inline-block; }
+        .badge-type.ex { background-color: #dc3545; }
+        .badge-type.in { background-color: #28a745; }
+        .badge-loc { background: #e2e8f0; color: #4a5568; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-right: 4px; }
+        .text-notes { color: #718096; font-size: 12px; display: block; margin-top: 2px; }
+    </style>
+</head>
+<body>
 
-function doGet(e) {
-  const p = e.parameter.password;
-  if (p !== SECRET_PIN) {
-    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "認証エラー" })).setMimeType(ContentService.MimeType.JSON);
-  }
-  
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const categories = { "支出": [], "収入": [] };
-  const expenseSetup = ss.getSheetByName("支出設定");
-  if (expenseSetup) {
-    const vals = expenseSetup.getRange("A1:A" + Math.max(2, expenseSetup.getLastRow())).getValues();
-    categories["支出"] = vals.map(r => r[0]).filter(v => v !== "");
-  }
-  const incomeSetup = ss.getSheetByName("収入設定");
-  if (incomeSetup) {
-    const vals = incomeSetup.getRange("A1:A" + Math.max(2, incomeSetup.getLastRow())).getValues();
-    categories["収入"] = vals.map(r => r[0]).filter(v => v !== "");
-  }
-  
-  let records = [];
-  const exHistory = ss.getSheetByName("支出履歴");
-  if (exHistory && exHistory.getLastRow() > 1) {
-    const rows = exHistory.getRange(2, 1, exHistory.getLastRow() - 1, 5).getValues();
-    rows.forEach(r => {
-      if(r[0]) {
-        // 🌟【自動補正】「支出履歴」に入っていても、項目が「収入」用なら「収入データ」としてアプリに返します
-        let detectedType = "支出";
-        if (categories["収入"].includes(r[1])) {
-          detectedType = "収入";
-        }
-        records.push({ type: detectedType, date: formatDate(r[0]), category: r[1], amount: r[2], location: r[3], notes: r[4], rawDate: new Date(r[0]) });
-      }
-    });
-  }
-  const inHistory = ss.getSheetByName("収入履歴");
-  if (inHistory && inHistory.getLastRow() > 1) {
-    const rows = inHistory.getRange(2, 1, inHistory.getLastRow() - 1, 5).getValues();
-    rows.forEach(r => {
-      if(r[0]) {
-        // 🌟【自動補正】「収入履歴」に入っていても、項目が「支出」用なら「支出データ」としてアプリに返します
-        let detectedType = "収入";
-        if (categories["支出"].includes(r[1])) {
-          detectedType = "支出";
-        }
-        records.push({ type: detectedType, date: formatDate(r[0]), category: r[1], amount: r[2], location: r[3], notes: r[4], rawDate: new Date(r[0]) });
-      }
-    });
-  }
-  
-  records.sort((a, b) => b.rawDate - a.rawDate);
-  records = records.slice(0, 50);
-  
-  const output = { status: "success", categories: categories, records: records };
-  return ContentService.createTextOutput(JSON.stringify(output)).setMimeType(ContentService.MimeType.JSON);
-}
+    <div id="auth-box" class="auth-container">
+        <h1>🔒 行動認証</h1>
+        <div class="form-group">
+            <input type="password" id="pin-input" inputmode="numeric" placeholder="PINコード" maxlength="4" style="text-align: center; font-size: 24px; letter-spacing: 5px;">
+            <button id="login-btn" class="submit-btn">入室する</button>
+            <div id="auth-error" class="error-msg"></div>
+        </div>
+    </div>
 
-function doPost(e) {
-  try {
-    const data = JSON.parse(e.postData.contents);
-    if (data.password !== SECRET_PIN) {
-      return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "認証エラー" })).setMimeType(ContentService.MimeType.JSON);
-    }
-    
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    
-    // 📸 レシート画像の解析リクエストだった場合の処理
-    if (data.action === "analyzeReceipt" && data.imageBlob) {
-      return analyzeReceiptOCR(data.imageBlob);
-    }
-    
-    // 🌟【超安全自動振り分けシステム】
-    // ユーザーがアプリ画面でどちらのボタンを選んでいようと、
-    // 送られてきた「項目名（カテゴリー）」が「支出設定」と「収入設定」のどちらにあるかで、書き込み先をGASが自動判断します！
-    let finalType = data.type; // 基本はアプリから送られたもの
-    
-    const expenseSetup = ss.getSheetByName("支出設定");
-    if (expenseSetup) {
-      const expenseVals = expenseSetup.getRange("A1:A" + Math.max(2, expenseSetup.getLastRow())).getValues().map(r => r[0]);
-      if (expenseVals.includes(data.category)) {
-        finalType = "支出";
-      }
-    }
-    
-    const incomeSetup = ss.getSheetByName("収入設定");
-    if (incomeSetup) {
-      const incomeVals = incomeSetup.getRange("A1:A" + Math.max(2, incomeSetup.getLastRow())).getValues().map(r => r[0]);
-      if (incomeVals.includes(data.category)) {
-        finalType = "収入";
-      }
-    }
-    
-    const sheetName = finalType === "支出" ? "支出履歴" : "収入履歴";
-    const sheet = ss.getSheetByName(sheetName);
-    if (!sheet) {
-      return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "履歴シートが見つかりません" })).setMimeType(ContentService.MimeType.JSON);
-    }
-    
-    let targetDate = new Date();
-    if (data.customDate) {
-      targetDate = new Date(data.customDate);
-    }
-    
-    sheet.appendRow([
-      targetDate,
-      data.category,
-      Number(data.amount),
-      data.location,
-      data.notes
-    ]);
-    
-    return ContentService.createTextOutput(JSON.stringify({ status: "success" })).setMimeType(ContentService.MimeType.JSON);
-    
-  } catch(err) {
-    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() })).setMimeType(ContentService.MimeType.JSON);
-  }
-}
+    <div id="app-box" class="container">
+        <h1>📝 家計簿</h1>
+        
+        <div class="type-selector">
+            <button type="button" id="btn-expense" class="type-btn active-ex">支出</button>
+            <button type="button" id="btn-income" class="type-btn">収入</button>
+        </div>
 
-// 👁️ Googleドライブの無料OCR機能を使ってレシートをガチで解析する関数
-function analyzeReceiptOCR(base64Image) {
-  try {
-    // 1. 送られてきた画像データをGoogleが読める形式に変換
-    const contentType = base64Image.substring(base64Image.indexOf(":") + 1, base64Image.indexOf(";"));
-    const byteCharacters = Utilities.base64Decode(base64Image.split(",")[1]);
-    const blob = Utilities.newBlob(byteCharacters, contentType, "receipt_temp");
-    
-    // 2. GoogleドライブのOCR機能（無料）を使って一時的にファイルを作成
-    const resource = { title: "receipt_ocr_temp", mimeType: contentType };
-    const tempFile = Drive.Files.insert(resource, blob, { ocr: true, ocrLanguage: "ja" });
-    
-    // 3. 認識されたテキストを取り出す
-    const doc = DocumentApp.openById(tempFile.id);
-    const text = doc.getBody().getText();
-    
-    // 4. 使い終わった一時ファイルを即座に完全削除（ドライブを汚しません）
-    Drive.Files.remove(tempFile.id);
-    
-    // 5. テキストから「金額」と「店名」を自動で探し出す
-    let amount = "";
-    let location = "";
-    
-    // 金額を探す（「合計」「小計」「税込」などの後ろにある数字、または一番大きい数字など）
-    const lines = text.split("\n");
-    
-    // 店名は高確率で1行目か2行目にあるので取得
-    if (lines.length > 0 && lines[0].trim().length > 1) location = lines[0].trim();
-    if (location.includes("領収") || location.includes("レシート") || location.length < 2) {
-      if (lines.length > 1) location = lines[1].trim();
-    }
-    
-    // 「合計」の文字が入った行から数字を抜き出す
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].replace(/\s+/g, ""); // スペースを除去
-      if (line.includes("合計") || line.includes("支払") || line.includes("小計")) {
-        const match = line.match(/[0-9,]{3,7}/); // 3桁〜7桁の数字を探す
-        if (match) {
-          amount = match[0].replace(/,/g, ""); // カンマを消して数字だけにする
-          break;
-        }
-      }
-    }
-    
-    // もし「合計」で見つからなければ、テキスト全体から一番それっぽい数字を探す
-    if (!amount) {
-      const matches = text.match(/[0-9,]{3,6}/g);
-      if (matches) {
-        // レシートの一番下の方に合計が来ることが多いため、後ろから探す
-        for (let j = matches.length - 1; j >= 0; j--) {
-          const num = matches[j].replace(/,/g, "");
-          if (Number(num) > 10 && Number(num) < 100000) { // 現実的な金額
-            amount = num;
-            break;
-          }
-        }
-      }
-    }
-    
-    return ContentService.createTextOutput(JSON.stringify({
-      status: "success",
-      amount: amount || "",
-      location: location.substring(0, 15) || "不明な店舗", // 長すぎたら切る
-      notes: "レシートOCR自動解析"
-    })).setMimeType(ContentService.MimeType.JSON);
-    
-  } catch (e) {
-    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "OCR解析失敗: " + e.toString() })).setMimeType(ContentService.MimeType.JSON);
-  }
-}
+        <div id="receipt-area" class="receipt-zone">
+            <span class="receipt-icon" id="receipt-status-icon">📸</span>
+            <span class="receipt-text" id="receipt-status-text">レシートを撮影して自動入力</span>
+            <input type="file" id="receipt-file" accept="image/*" capture="environment" style="display: none;">
+        </div>
 
-function formatDate(dateObj) {
-  if (!dateObj) return "";
-  const d = new Date(dateObj);
-  if (isNaN(d.getTime())) return String(dateObj);
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${yyyy}/${mm}/${dd}`;
-}
+        <div class="form-group">
+            <label for="date-input">📅 日付</label>
+            <input type="date" id="date-input">
+
+            <label for="category">🗂️ 項目</label>
+            <select id="category"></select>
+
+            <label for="amount">💰 金額</label>
+            <input type="number" id="amount" placeholder="金額 (円)" inputmode="numeric">
+
+            <label for="location">📍 場所</label>
+            <input type="text" id="location" placeholder="場所（例: スーパー、Amazon）">
+
+            <label for="notes">💬 メモ</label>
+            <input type="text" id="notes" placeholder="メモ・備考（自由入力）">
+
+            <button id="add-btn" class="submit-btn">データを同期して記録</button>
+        </div>
+        
+        <h2>📊 収支レポート</h2>
+        <div class="chart-container">
+            <div class="chart-tabs">
+                <button class="chart-tab-btn active" id="tab-month">今月</button>
+                <button class="chart-tab-btn" id="tab-year">今年</button>
+            </div>
+            <!-- 📊 ドーナツ型グラフを描画するCanvas領域 -->
+            <canvas id="myChart" width="400" height="300"></canvas>
+        </div>
+
+        <h2>履歴一覧</h2>
+        <div id="loading-status" class="loading">データを最新に同期中...</div>
+        <ul id="history-list"></ul>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbw9M0Y5blppK97M_HtfCYbSHzJwpOimSkJmVuGB8ARMtynrG_CEp3Lgtdh_kpqdKBS5GQ/exec";
+        
+        let currentPin = "";
+        let currentType = "支出";
+        let serverCategories = { "支出": [], "収入": [] }; 
+        let globalRecords = [];
+        let myChart = null;
+        let currentChartPeriod = "month";
+
+        const authBox = document.getElementById('auth-box');
+        const appBox = document.getElementById('app-box');
+        const pinInput = document.getElementById('pin-input');
+        const loginBtn = document.getElementById('login-btn');
+        const authError = document.getElementById('auth-error');
+
+        const btnExpense = document.getElementById('btn-expense');
+        const btnIncome = document.getElementById('btn-income');
+        const receiptArea = document.getElementById('receipt-area');
+        const receiptFile = document.getElementById('receipt-file');
+        const receiptStatusIcon = document.getElementById('receipt-status-icon');
+        const receiptStatusText = document.getElementById('receipt-status-text');
+        const dateInput = document.getElementById('date-input');
+        const categorySelect = document.getElementById('category');
+        const amountInput = document.getElementById('amount');
+        const locationInput = document.getElementById('location');
+        const notesInput = document.getElementById('notes');
+        const addBtn = document.getElementById('add-btn');
+        const historyList = document.getElementById('history-list');
+        const loadingStatus = document.getElementById('loading-status');
+        
+        const tabMonth = document.getElementById('tab-month');
+        const tabYear = document.getElementById('tab-year');
+
+        function setTodayDate() {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            dateInput.value = `${yyyy}-${mm}-${dd}`;
+        }
+        setTodayDate();
+
+        function updateCategoryOptions() {
+            categorySelect.innerHTML = "";
+            const list = (serverCategories && serverCategories[currentType]) ? serverCategories[currentType] : [];
+            
+            if(list.length === 0) {
+                const opt = document.createElement('option');
+                opt.value = "その他";
+                opt.innerText = "その他";
+                categorySelect.appendChild(opt);
+                return;
+            }
+
+            list.forEach(cat => {
+                if(cat) {
+                    const opt = document.createElement('option');
+                    opt.value = cat;
+                    opt.innerText = cat;
+                    categorySelect.appendChild(opt);
+                }
+            });
+        }
+
+        updateCategoryOptions();
+
+        btnExpense.addEventListener('click', () => {
+            currentType = "支出";
+            btnExpense.classList.add('active-ex');
+            btnIncome.classList.remove('active-in');
+            receiptArea.style.display = "block";
+            updateCategoryOptions();
+            // 🌟 タイプ（支出）の変更に合わせて履歴の表示を更新
+            updateUI(globalRecords);
+        });
+
+        btnIncome.addEventListener('click', () => {
+            currentType = "収入";
+            btnIncome.classList.add('active-in');
+            btnExpense.classList.remove('active-ex');
+            receiptArea.style.display = "none";
+            updateCategoryOptions();
+            // 🌟 タイプ（収入）の変更に合わせて履歴の表示を更新
+            updateUI(globalRecords);
+        });
+
+        receiptArea.addEventListener('click', () => {
+            if (receiptStatusText.innerText.includes("解析中")) return;
+            receiptFile.click();
+        });
+
+        // 👁️ 【本物のOCR機能】選択された画像をBase64に変換してGASに送信し、フォームに自動入力
+        receiptFile.addEventListener('change', (e) => {
+            if (e.target.files.length === 0) return;
+            const file = e.target.files[0];
+            
+            receiptStatusIcon.innerText = "⏳";
+            receiptStatusText.innerText = "本物のAIが文字を解析中...";
+            receiptArea.style.background = "#f1f5f9";
+            
+            const reader = new FileReader();
+            reader.onload = async function(event) {
+                const base64Image = event.target.result;
+                
+                try {
+                    const response = await fetch(API_URL, {
+                        method: "POST",
+                        body: JSON.stringify({
+                            password: currentPin,
+                            action: "analyzeReceipt",
+                            imageBlob: base64Image
+                        })
+                    });
+                    const result = await response.json();
+                    
+                    if (result.status === "success") {
+                        // 🌟 本物のデータをフォームの各入力欄に直接代入
+                        if (result.amount) {
+                            amountInput.value = result.amount;
+                        } else {
+                            amountInput.value = '';
+                        }
+                        if (result.location) {
+                            locationInput.value = result.location;
+                        } else {
+                            locationInput.value = '';
+                        }
+                        if (result.notes) {
+                            notesInput.value = result.notes;
+                        } else {
+                            notesInput.value = '';
+                        }
+                        
+                        // 「食費」というカテゴリーがあれば自動選択
+                        const options = Array.from(categorySelect.options);
+                        const foodOpt = options.find(opt => opt.value.includes("食費"));
+                        if (foodOpt) categorySelect.value = foodOpt.value;
+                        
+                        alert("✨ 解析成功！金額と店名を自動入力しました。");
+                    } else {
+                        alert("文字の読み取りに失敗しました。手動で入力してください。");
+                    }
+                } catch(err) {
+                    alert("通信エラーが発生しました。");
+                    console.error(err);
+                } finally {
+                    receiptStatusIcon.innerText = "📸";
+                    receiptStatusText.innerText = "レシートを撮影して自動入力";
+                    receiptArea.style.background = "#f8fafc";
+                    receiptFile.value = "";
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+
+        tabMonth.addEventListener('click', () => {
+            currentChartPeriod = "month";
+            tabMonth.classList.add('active');
+            tabYear.classList.remove('active');
+            renderChart();
+        });
+        tabYear.addEventListener('click', () => {
+            currentChartPeriod = "year";
+            tabYear.classList.add('active');
+            tabMonth.classList.remove('active');
+            renderChart();
+        });
+
+        loginBtn.addEventListener('click', async () => {
+            const pin = pinInput.value;
+            if (!pin) return;
+            
+            authError.innerText = "セキュリティ検証中...";
+            loginBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}?password=${pin}`);
+                const result = await response.json();
+                
+                if (result.status === "success") {
+                    currentPin = pin;
+                    if (result.categories) serverCategories = result.categories;
+                    
+                    authBox.style.display = "none";
+                    appBox.style.display = "block";
+                    document.body.style.alignItems = "flex-start";
+                    document.body.style.paddingTop = "20px";
+                    
+                    updateCategoryOptions();
+                    globalRecords = result.records || [];
+                    updateUI(globalRecords);
+                } else {
+                    authError.innerText = "PINコードが正しくありません。";
+                    loginBtn.disabled = false;
+                }
+            } catch (e) {
+                authError.innerText = "接続エラー。URLが正しいか確認してください。";
+                loginBtn.disabled = false;
+            }
+        });
+
+        async function fetchLatestData() {
+            loadingStatus.style.display = "block";
+            try {
+                const response = await fetch(`${API_URL}?password=${currentPin}`);
+                const result = await response.json();
+                if (result.status === "success" && result.categories) {
+                    serverCategories = result.categories; 
+                    updateCategoryOptions();
+                    globalRecords = result.records || [];
+                    updateUI(globalRecords);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+            loadingStatus.style.display = "none";
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('myChart').getContext('2d');
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth() + 1;
+
+            const filtered = globalRecords.filter(r => {
+                if (r.type !== currentType) return false;
+                const parts = r.date.split('/');
+                if (parts.length < 3) return false;
+                const rYear = parseInt(parts[0]);
+                const rMonth = parseInt(parts[1]);
+
+                if (currentChartPeriod === "month") {
+                    return rYear === currentYear && rMonth === currentMonth;
+                } else {
+                    return rYear === currentYear;
+                }
+            });
+
+            const totals = {};
+            filtered.forEach(r => {
+                const cat = r.category || "その他";
+                totals[cat] = (totals[cat] || 0) + Number(r.amount);
+            });
+
+            const labels = Object.keys(totals);
+            const dataValues = Object.values(totals);
+
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            if (labels.length === 0) {
+                myChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['データなし'],
+                        datasets: [{ data: [1], backgroundColor: ['#e2e8f0'] }]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+                });
+                return;
+            }
+
+            myChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: dataValues,
+                        backgroundColor: [
+                            '#ff6384', '#36a2eb', '#cc65fe', '#ffce56', '#4bc0c0', '#333333', '#ffa94d', '#74c0fc'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.label}: ${Number(context.raw).toLocaleString()} 円`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 🌟 履歴一覧に選択されているタイプ（支出/収入）と同じものだけを表示するようにフィルター
+        function updateUI(records) {
+            historyList.innerHTML = '';
+            renderChart();
+            
+            if(!records || records.length === 0) {
+                historyList.innerHTML = '<li style="color:#999; justify-content:center;">データがまだありません</li>';
+                return;
+            }
+            
+            // 🌟 選択されている現在のタイプ（支出 または 収入）のものだけを絞り込む
+            const filteredRecords = records.filter(r => r.type === currentType);
+            
+            if(filteredRecords.length === 0) {
+                historyList.innerHTML = `<li style="color:#999; justify-content:center;">${currentType}のデータはまだありません</li>`;
+                return;
+            }
+            
+            filteredRecords.forEach(r => {
+                const li = document.createElement('li');
+                li.className = r.type === "支出" ? "ex-item" : "in-item";
+                
+                let metaText = "";
+                if (r.location) metaText += `<span class="badge-loc">📍 ${r.location}</span>`;
+                if (r.notes) metaText += `<span class="text-notes">💬 ${r.notes}</span>`;
+
+                const prefix = r.type === "支出" ? "-" : "+";
+                const priceColor = r.type === "支出" ? "#dc3545" : "#28a745";
+                const badgeClass = r.type === "支出" ? "ex" : "in";
+
+                li.innerHTML = `
+                    <div>
+                        <div>
+                            <span class="badge-type ${badgeClass}">[${r.type}]</span>
+                            <strong style="font-size:15px;">${r.category || 'その他'}</strong>
+                        </div>
+                        <div style="margin-top: 4px; min-height: 14px;">${metaText}</div>
+                        <span style="font-size:10px; color:#aaa; display:block; margin-top:2px;">${r.date}</span>
+                    </div> 
+                    <span style="font-weight:bold; font-size:18px; color: ${priceColor}; white-space: nowrap;">
+                        ${prefix}${Number(r.amount).toLocaleString()} 円
+                    </span>
+                `;
+                historyList.appendChild(li);
+            });
+        }
+
+        addBtn.addEventListener('click', async () => {
+            const amount = amountInput.value;
+            const category = categorySelect.value;
+            const location = locationInput.value;
+            const notes = notesInput.value;
+            const selectedDate = dateInput.value.replace(/-/g, '/');
+            
+            if (!amount) return alert('金額を入力してください');
+            if (!selectedDate) return alert('日付を入力してください');
+            
+            addBtn.disabled = true;
+            addBtn.innerText = "暗号化同期中...";
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        password: currentPin,
+                        type: currentType,
+                        category: category,
+                        amount: amount,
+                        location: location,
+                        notes: notes,
+                        customDate: selectedDate
+                    })
+                });
+                const result = await response.json();
+                
+                if (result.status === "success") {
+                    amountInput.value = '';
+                    locationInput.value = '';
+                    notesInput.value = '';
+                    setTodayDate();
+                    await fetchLatestData();
+                } else {
+                    alert(result.message);
+                }
+            } catch (e) {
+                alert("送信中にエラーが発生しました。");
+            }
+            
+            addBtn.disabled = false;
+            addBtn.innerText = "データを同期して記録";
+        });
+    </script>
+</body>
+</html>
