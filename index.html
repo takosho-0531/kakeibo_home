@@ -42,6 +42,9 @@
         
         .loading { font-size: 14px; color: #666; text-align: center; display: none; margin-bottom: 10px; }
         .error-msg { color: red; font-size: 14px; margin-top: 10px; }
+        .badge-type { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; color: white; margin-right: 4px; }
+        .badge-type.ex { background-color: #dc3545; }
+        .badge-type.in { background-color: #28a745; }
         .badge-loc { background: #e2e8f0; color: #4a5568; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-right: 4px; }
         .text-notes { color: #718096; font-size: 12px; display: block; margin-top: 2px; }
     </style>
@@ -194,12 +197,11 @@
             receiptFile.click();
         });
 
-        // 👁️ 【ガチ機能】選択された画像をBase64に変換してGASのOCRに送る処理
+        // 👁️ 【本物のOCR機能】選択された画像をBase64に変換してGASに送信し、フォームに自動挿入
         receiptFile.addEventListener('change', (e) => {
             if (e.target.files.length === 0) return;
             const file = e.target.files[0];
             
-            // 画面表示を「解析中」に変える
             receiptStatusIcon.innerText = "⏳";
             receiptStatusText.innerText = "本物のAIが文字を解析中...";
             receiptArea.style.background = "#f1f5f9";
@@ -209,7 +211,6 @@
                 const base64Image = event.target.result;
                 
                 try {
-                    // GASに画像をPOST送信してOCRにかける
                     const response = await fetch(API_URL, {
                         method: "POST",
                         body: JSON.stringify({
@@ -221,10 +222,16 @@
                     const result = await response.json();
                     
                     if (result.status === "success") {
-                        // GASが読み取った本物のデータをフォームに入れる！
-                        if (result.amount) amountInput.value = result.amount;
-                        if (result.location) locationInput.value = result.location;
-                        if (result.notes) notesInput.value = result.notes;
+                        // 🌟 ここで本物のデータをフォームの各入力欄に直接代入しています！
+                        if (result.amount) {
+                            amountInput.value = result.amount;
+                        }
+                        if (result.location) {
+                            locationInput.value = result.location;
+                        }
+                        if (result.notes) {
+                            notesInput.value = result.notes;
+                        }
                         
                         // 「食費」というカテゴリーがあれば自動選択
                         const options = Array.from(categorySelect.options);
@@ -239,11 +246,10 @@
                     alert("通信エラーが発生しました。");
                     console.error(err);
                 } finally {
-                    // 表示を元に戻す
                     receiptStatusIcon.innerText = "📸";
                     receiptStatusText.innerText = "レシートを撮影して自動入力";
                     receiptArea.style.background = "#f8fafc";
-                    receiptFile.value = ""; // リセット
+                    receiptFile.value = "";
                 }
             };
             reader.readAsDataURL(file);
@@ -384,6 +390,7 @@
             });
         }
 
+        // 🌟 履歴一覧に「[支出]」「[収入]」の文字バッジを追加して区別可能にする
         function updateUI(records) {
             historyList.innerHTML = '';
             renderChart();
@@ -403,10 +410,14 @@
 
                 const prefix = r.type === "支出" ? "-" : "+";
                 const priceColor = r.type === "支出" ? "#dc3545" : "#28a745";
+                const badgeClass = r.type === "支出" ? "ex" : "in";
 
                 li.innerHTML = `
                     <div>
-                        <strong style="font-size:15px;">[${r.category || 'その他'}]</strong>
+                        <div>
+                            <span class="badge-type ${badgeClass}">[${r.type}]</span>
+                            <strong style="font-size:15px;">${r.category || 'その他'}</strong>
+                        </div>
                         <div style="margin-top: 4px; min-height: 14px;">${metaText}</div>
                         <span style="font-size:10px; color:#aaa; display:block; margin-top:2px;">${r.date}</span>
                     </div> 
