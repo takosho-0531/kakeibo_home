@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>プレミアム家計簿</title>
+    <!-- 📊 グラフを描画するためのChart.jsライブラリを読み込み -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: sans-serif; background-color: #f0f4f8; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; box-sizing: border-box; }
@@ -42,7 +43,7 @@
         
         .loading { font-size: 14px; color: #666; text-align: center; display: none; margin-bottom: 10px; }
         .error-msg { color: red; font-size: 14px; margin-top: 10px; }
-        .badge-type { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; color: white; margin-right: 4px; }
+        .badge-type { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; color: white; margin-right: 4px; display: inline-block; }
         .badge-type.ex { background-color: #dc3545; }
         .badge-type.in { background-color: #28a745; }
         .badge-loc { background: #e2e8f0; color: #4a5568; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-right: 4px; }
@@ -99,6 +100,7 @@
                 <button class="chart-tab-btn active" id="tab-month">今月</button>
                 <button class="chart-tab-btn" id="tab-year">今年</button>
             </div>
+            <!-- 📊 ドーナツ型グラフを描画するCanvas領域 -->
             <canvas id="myChart" width="400" height="300"></canvas>
         </div>
 
@@ -197,7 +199,7 @@
             receiptFile.click();
         });
 
-        // 👁️ 【本物のOCR機能】選択された画像をBase64に変換してGASに送信し、フォームに自動挿入
+        // 👁️ 【本物のOCR機能】選択された画像をBase64に変換してGASに送信し、フォームに自動入力
         receiptFile.addEventListener('change', (e) => {
             if (e.target.files.length === 0) return;
             const file = e.target.files[0];
@@ -222,15 +224,21 @@
                     const result = await response.json();
                     
                     if (result.status === "success") {
-                        // 🌟 ここで本物のデータをフォームの各入力欄に直接代入しています！
+                        // 🌟 本物のデータをフォームの各入力欄に直接代入
                         if (result.amount) {
                             amountInput.value = result.amount;
+                        } else {
+                            amountInput.value = '';
                         }
                         if (result.location) {
                             locationInput.value = result.location;
+                        } else {
+                            locationInput.value = '';
                         }
                         if (result.notes) {
                             notesInput.value = result.notes;
+                        } else {
+                            notesInput.value = '';
                         }
                         
                         // 「食費」というカテゴリーがあれば自動選択
@@ -390,7 +398,7 @@
             });
         }
 
-        // 🌟 履歴一覧に「[支出]」「[収入]」の文字バッジを追加して区別可能にする
+        // 🌟 履歴一覧に「[支出]」「[収入]」の文字バッジを表示して区別可能にする
         function updateUI(records) {
             historyList.innerHTML = '';
             renderChart();
