@@ -4,50 +4,70 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>プレミアム家計簿</title>
-    <!-- 📊 グラフを描画するためのChart.jsライブラリを読み込み -->
+    <!-- 📊 グラフ用の外部ライブラリを読み込み -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: sans-serif; background-color: #f0f4f8; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; box-sizing: border-box; }
-        .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 440px; display: none; }
-        .auth-container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 320px; text-align: center; }
-        h1 { text-align: center; color: #333; font-size: 24px; margin-top: 0; font-weight: bold; }
-        h2 { color: #555; font-size: 18px; margin-top: 25px; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --expense: #dc2626;
+            --income: #16a34a;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; box-sizing: border-box; }
+        .container { background: var(--card); padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05); width: 100%; max-width: 440px; display: none; }
+        .auth-container { background: var(--card); padding: 28px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); width: 100%; max-width: 320px; text-align: center; }
+        h1 { text-align: center; color: var(--text); font-size: 24px; margin-top: 0; font-weight: 800; letter-spacing: -0.5px; }
+        h2 { color: var(--text); font-size: 18px; margin-top: 25px; border-bottom: 2px solid var(--border); padding-bottom: 6px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+        
         .form-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
-        label { font-size: 13px; color: #666; margin-bottom: -8px; font-weight: bold; }
-        input, select, button { padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; width: 100%; }
-        input:focus, select:focus { border-color: #007bff; outline: none; }
+        label { font-size: 13px; color: var(--text-light); margin-bottom: -8px; font-weight: 700; }
+        input, select, button { padding: 12px 14px; font-size: 15px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; width: 100%; transition: all 0.2s ease; }
+        input:focus, select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
         
-        .type-selector { display: flex; border: 1px solid #ccc; border-radius: 6px; overflow: hidden; margin-bottom: 15px; }
-        .type-btn { background: #eee; color: #555; border: none; border-radius: 0; cursor: pointer; padding: 12px; font-size: 16px; width: 50%; }
-        .type-btn.active-ex { background-color: #dc3545; color: white; font-weight: bold; }
-        .type-btn.active-in { background-color: #28a745; color: white; font-weight: bold; }
+        .type-selector { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 15px; }
+        .type-btn { background: #f1f5f9; color: var(--text-light); border: none; border-radius: 0; cursor: pointer; padding: 12px; font-size: 15px; width: 50%; font-weight: 600; }
+        .type-btn.active-ex { background-color: var(--expense); color: white; }
+        .type-btn.active-in { background-color: var(--income); color: white; }
         
-        .receipt-zone { background: #f8fafc; border: 2px dashed #cbd5e1; padding: 15px; text-align: center; border-radius: 8px; cursor: pointer; margin-bottom: 10px; }
-        .receipt-zone:hover { background: #f1f5f9; }
+        .receipt-zone { background: #f5f3ff; border: 2px dashed #c084fc; padding: 15px; text-align: center; border-radius: 8px; cursor: pointer; margin-bottom: 10px; }
+        .receipt-zone:hover { background: #f3e8ff; }
         .receipt-icon { font-size: 28px; display: block; margin-bottom: 5px; }
-        .receipt-text { font-size: 13px; color: #64748b; font-weight: bold; }
+        .receipt-text { font-size: 13px; color: #7e22ce; font-weight: bold; }
         
-        .chart-container { background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
-        .chart-tabs { display: flex; gap: 5px; margin-bottom: 10px; justify-content: center; }
-        .chart-tab-btn { padding: 6px 12px; font-size: 12px; border: 1px solid #cbd5e1; background: white; border-radius: 20px; cursor: pointer; width: auto; }
-        .chart-tab-btn.active { background: #475569; color: white; border-color: #475569; font-weight: bold; }
+        /* 📊 期間指定用プルダウンエリア */
+        .period-selector { display: flex; gap: 6px; align-items: center; }
+        .period-select { padding: 6px 10px; font-size: 13px; width: auto; background: #ffffff; }
+        .chart-container { background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid var(--border); }
         
-        button.submit-btn { background-color: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 5px; }
-        button.submit-btn:hover { background-color: #0056b3; }
+        button.submit-btn { background-color: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 5px; }
+        button.submit-btn:hover { background-color: var(--primary-hover); }
         button:disabled { background-color: #ccc; cursor: not-allowed; }
         
-        ul { list-style: none; padding: 0; margin: 0; max-height: 250px; overflow-y: auto; }
-        li { background: #f9f9f9; padding: 12px; margin-bottom: 6px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; border-left: 6px solid #ccc; }
-        li.ex-item { border-left-color: #dc3545; }
-        li.in-item { border-left-color: #28a745; }
+        ul { list-style: none; padding: 0; margin: 0; max-height: 280px; overflow-y: auto; }
+        li { background: #ffffff; padding: 12px; margin-bottom: 8px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; border: 1px solid var(--border); border-left: 6px solid #ccc; }
+        li.ex-item { border-left-color: var(--expense); }
+        li.in-item { border-left-color: var(--income); }
         
-        .loading { font-size: 14px; color: #666; text-align: center; display: none; margin-bottom: 10px; }
-        .error-msg { color: red; font-size: 14px; margin-top: 10px; }
+        .item-main { display: flex; flex-direction: column; gap: 4px; flex-grow: 1; }
+        .item-action-area { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+        .item-actions { display: flex; gap: 6px; }
+        .action-btn { background: #f1f5f9; border: 1px solid var(--border); cursor: pointer; padding: 4px 8px; font-size: 12px; border-radius: 6px; width: auto; display: flex; align-items: center; justify-content: center; }
+        .action-btn:hover { background: #e2e8f0; }
+        .action-btn.edit { color: #2563eb; }
+        .action-btn.delete { color: #dc2626; }
+        
+        .loading { font-size: 14px; color: var(--text-light); text-align: center; display: none; margin-bottom: 10px; }
+        .error-msg { color: var(--expense); font-size: 14px; margin-top: 10px; }
         .badge-type { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; color: white; margin-right: 4px; display: inline-block; }
-        .badge-type.ex { background-color: #dc3545; }
-        .badge-type.in { background-color: #28a745; }
+        .badge-type.ex { background-color: var(--expense); }
+        .badge-type.in { background-color: var(--income); }
         .badge-loc { background: #e2e8f0; color: #4a5568; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-right: 4px; }
-        .text-notes { color: #718096; font-size: 12px; display: block; margin-top: 2px; }
+        .text-notes { color: var(--text-light); font-size: 12px; display: block; margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -94,13 +114,21 @@
             <button id="add-btn" class="submit-btn">データを同期して記録</button>
         </div>
         
-        <h2>📊 収支レポート</h2>
-        <div class="chart-container">
-            <div class="chart-tabs">
-                <button class="chart-tab-btn active" id="tab-month">今月</button>
-                <button class="chart-tab-btn" id="tab-year">今年</button>
+        <!-- 📊 レポートエリア -->
+        <h2>
+            <span>📊 収支レポート</span>
+            <div class="period-selector">
+                <select id="select-year" class="period-select"></select>
+                <select id="select-month" class="period-select">
+                    <option value="all">年次(全体)</option>
+                    <option value="01">1月</option><option value="02">2月</option><option value="03">3月</option>
+                    <option value="04">4月</option><option value="05">5月</option><option value="06">6月</option>
+                    <option value="07">7月</option><option value="08">8月</option><option value="09">9月</option>
+                    <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+                </select>
             </div>
-            <!-- 📊 ドーナツ型グラフを描画するCanvas領域 -->
+        </h2>
+        <div class="chart-container">
             <canvas id="myChart" width="400" height="300"></canvas>
         </div>
 
@@ -117,7 +145,7 @@
         let serverCategories = { "支出": [], "収入": [] }; 
         let globalRecords = [];
         let myChart = null;
-        let currentChartPeriod = "month";
+        let editingIndex = null; // ✏️ 編集中のレコードインデックス(nullの時は新規追加)
 
         const authBox = document.getElementById('auth-box');
         const appBox = document.getElementById('app-box');
@@ -140,8 +168,24 @@
         const historyList = document.getElementById('history-list');
         const loadingStatus = document.getElementById('loading-status');
         
-        const tabMonth = document.getElementById('tab-month');
-        const tabYear = document.getElementById('tab-year');
+        const selectYear = document.getElementById('select-year');
+        const selectMonth = document.getElementById('select-month');
+
+        // 📅 年・月指定セレクターの初期化
+        function initPeriodSelectors() {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            selectYear.innerHTML = "";
+            for (let y = currentYear; y >= currentYear - 5; y--) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.innerText = `${y}年`;
+                selectYear.appendChild(opt);
+            }
+            const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
+            selectMonth.value = currentMonth;
+        }
+        initPeriodSelectors();
 
         function setTodayDate() {
             const today = new Date();
@@ -182,7 +226,7 @@
             btnIncome.classList.remove('active-in');
             receiptArea.style.display = "block";
             updateCategoryOptions();
-            // 🌟 タイプ（支出）の変更に合わせて履歴の表示を更新
+            cancelEdit(); // 切替時に編集モードを解除
             updateUI(globalRecords);
         });
 
@@ -192,7 +236,7 @@
             btnExpense.classList.remove('active-ex');
             receiptArea.style.display = "none";
             updateCategoryOptions();
-            // 🌟 タイプ（収入）の変更に合わせて履歴の表示を更新
+            cancelEdit(); // 切替時に編集モードを解除
             updateUI(globalRecords);
         });
 
@@ -201,7 +245,6 @@
             receiptFile.click();
         });
 
-        // 👁️ 【本物のOCR機能】選択された画像をBase64に変換してGASに送信し、フォームに自動入力
         receiptFile.addEventListener('change', (e) => {
             if (e.target.files.length === 0) return;
             const file = e.target.files[0];
@@ -226,24 +269,10 @@
                     const result = await response.json();
                     
                     if (result.status === "success") {
-                        // 🌟 本物のデータをフォームの各入力欄に直接代入
-                        if (result.amount) {
-                            amountInput.value = result.amount;
-                        } else {
-                            amountInput.value = '';
-                        }
-                        if (result.location) {
-                            locationInput.value = result.location;
-                        } else {
-                            locationInput.value = '';
-                        }
-                        if (result.notes) {
-                            notesInput.value = result.notes;
-                        } else {
-                            notesInput.value = '';
-                        }
+                        if (result.amount) amountInput.value = result.amount;
+                        if (result.location) locationInput.value = result.location;
+                        if (result.notes) notesInput.value = result.notes;
                         
-                        // 「食費」というカテゴリーがあれば自動選択
                         const options = Array.from(categorySelect.options);
                         const foodOpt = options.find(opt => opt.value.includes("食費"));
                         if (foodOpt) categorySelect.value = foodOpt.value;
@@ -265,18 +294,8 @@
             reader.readAsDataURL(file);
         });
 
-        tabMonth.addEventListener('click', () => {
-            currentChartPeriod = "month";
-            tabMonth.classList.add('active');
-            tabYear.classList.remove('active');
-            renderChart();
-        });
-        tabYear.addEventListener('click', () => {
-            currentChartPeriod = "year";
-            tabYear.classList.add('active');
-            tabMonth.classList.remove('active');
-            renderChart();
-        });
+        selectYear.addEventListener('change', () => renderChart());
+        selectMonth.addEventListener('change', () => renderChart());
 
         loginBtn.addEventListener('click', async () => {
             const pin = pinInput.value;
@@ -328,23 +347,35 @@
             loadingStatus.style.display = "none";
         }
 
+        // 🎨 スマート配色カラーパレット自動生成関数 (黄金比 HSLを用いた色自動決定)
+        function generateAutoColors(count) {
+            const colors = [];
+            const goldenRatioConjugate = 0.618033988749895;
+            let h = 0.15; // スタートの色調
+            for (let i = 0; i < count; i++) {
+                h += goldenRatioConjugate;
+                h %= 1;
+                colors.push(`hsl(${Math.floor(h * 360)}, 70%, 60%)`);
+            }
+            return colors;
+        }
+
         function renderChart() {
             const ctx = document.getElementById('myChart').getContext('2d');
-            const now = new Date();
-            const currentYear = now.getFullYear();
-            const currentMonth = now.getMonth() + 1;
+            const targetYear = selectYear.value;
+            const targetMonth = selectMonth.value; // "all" または "01"〜"12"
 
             const filtered = globalRecords.filter(r => {
                 if (r.type !== currentType) return false;
                 const parts = r.date.split('/');
                 if (parts.length < 3) return false;
-                const rYear = parseInt(parts[0]);
-                const rMonth = parseInt(parts[1]);
+                const rYear = parts[0];
+                const rMonth = parts[1];
 
-                if (currentChartPeriod === "month") {
-                    return rYear === currentYear && rMonth === currentMonth;
+                if (targetMonth === "all") {
+                    return rYear === targetYear;
                 } else {
-                    return rYear === currentYear;
+                    return rYear === targetYear && rMonth === targetMonth;
                 }
             });
 
@@ -373,15 +404,16 @@
                 return;
             }
 
+            // 🎨 カテゴリー数に合わせて美しい色調パレットを自動的に生成！
+            const autoColors = generateAutoColors(labels.length);
+
             myChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: labels,
                     datasets: [{
                         data: dataValues,
-                        backgroundColor: [
-                            '#ff6384', '#36a2eb', '#cc65fe', '#ffce56', '#4bc0c0', '#333333', '#ffa94d', '#74c0fc'
-                        ]
+                        backgroundColor: autoColors
                     }]
                 },
                 options: {
@@ -400,7 +432,6 @@
             });
         }
 
-        // 🌟 履歴一覧に選択されているタイプ（支出/収入）と同じものだけを表示するようにフィルター
         function updateUI(records) {
             historyList.innerHTML = '';
             renderChart();
@@ -410,7 +441,6 @@
                 return;
             }
             
-            // 🌟 選択されている現在のタイプ（支出 または 収入）のものだけを絞り込む
             const filteredRecords = records.filter(r => r.type === currentType);
             
             if(filteredRecords.length === 0) {
@@ -427,11 +457,14 @@
                 if (r.notes) metaText += `<span class="text-notes">💬 ${r.notes}</span>`;
 
                 const prefix = r.type === "支出" ? "-" : "+";
-                const priceColor = r.type === "支出" ? "#dc3545" : "#28a745";
+                const priceColor = r.type === "支出" ? "var(--expense)" : "var(--income)";
                 const badgeClass = r.type === "支出" ? "ex" : "in";
 
+                // 全体データ配列の中の正しいインデックスを探す
+                const realIndex = globalRecords.indexOf(r);
+
                 li.innerHTML = `
-                    <div>
+                    <div class="item-main">
                         <div>
                             <span class="badge-type ${badgeClass}">[${r.type}]</span>
                             <strong style="font-size:15px;">${r.category || 'その他'}</strong>
@@ -439,12 +472,84 @@
                         <div style="margin-top: 4px; min-height: 14px;">${metaText}</div>
                         <span style="font-size:10px; color:#aaa; display:block; margin-top:2px;">${r.date}</span>
                     </div> 
-                    <span style="font-weight:bold; font-size:18px; color: ${priceColor}; white-space: nowrap;">
-                        ${prefix}${Number(r.amount).toLocaleString()} 円
-                    </span>
+                    <div class="item-action-area">
+                        <span style="font-weight:bold; font-size:17px; color: ${priceColor}; white-space: nowrap;">
+                            ${prefix}${Number(r.amount).toLocaleString()} 円
+                        </span>
+                        <!-- ✏️🗑️ 編集・削除ボタン領域 -->
+                        <div class="item-actions">
+                            <button class="action-btn edit" onclick="startEdit(${realIndex})">✏️ 編集</button>
+                            <button class="action-btn delete" onclick="deleteRecord(${realIndex})">🗑️ 削除</button>
+                        </div>
+                    </div>
                 `;
                 historyList.appendChild(li);
             });
+        }
+
+        // ✏️ 編集モードに入る処理
+        function startEdit(index) {
+            editingIndex = index;
+            const item = globalRecords[index];
+            
+            // フォームの各項目に値をセット
+            const formattedDate = item.date.replace(/\//g, '-');
+            dateInput.value = formattedDate;
+            categorySelect.value = item.category;
+            amountInput.value = item.amount;
+            locationInput.value = item.location || '';
+            notesInput.value = item.notes || '';
+            
+            // ボタン表示の切り替え
+            addBtn.innerText = "変更を同期して保存";
+            addBtn.style.backgroundColor = "#eab308"; // 黄色系の目立つカラー
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ✏️ 編集モードをキャンセル（通常モードに戻す）
+        function cancelEdit() {
+            editingIndex = null;
+            addBtn.innerText = "データを同期して記録";
+            addBtn.style.backgroundColor = "var(--primary)";
+            amountInput.value = '';
+            locationInput.value = '';
+            notesInput.value = '';
+            setTodayDate();
+        }
+
+        // 🗑️ 削除をGASへ連携する処理
+        async function deleteRecord(index) {
+            const item = globalRecords[index];
+            const confirmMsg = `【削除確認】\n「${item.date} : [${item.category}] ${Number(item.amount).toLocaleString()}円」を削除しますか？\n(スプレッドシートからも完全に消去されます)`;
+            if (!confirm(confirmMsg)) return;
+
+            loadingStatus.style.display = "block";
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        password: currentPin,
+                        action: "deleteRecord",
+                        type: item.type,
+                        date: item.date,
+                        category: item.category,
+                        amount: item.amount,
+                        location: item.location,
+                        notes: item.notes
+                    })
+                });
+                const result = await response.json();
+                if (result.status === "success") {
+                    alert("🗑️ データを完全に削除しました。");
+                    if (editingIndex === index) cancelEdit();
+                    await fetchLatestData();
+                } else {
+                    alert("削除に失敗しました：" + result.message);
+                }
+            } catch(e) {
+                alert("通信エラーが発生しました。");
+            }
+            loadingStatus.style.display = "none";
         }
 
         addBtn.addEventListener('click', async () => {
@@ -460,26 +565,36 @@
             addBtn.disabled = true;
             addBtn.innerText = "暗号化同期中...";
             
+            // 編集か新規追加かに応じてGASに渡すパラメータを調整
+            const payload = {
+                password: currentPin,
+                type: currentType,
+                category: category,
+                amount: amount,
+                location: location,
+                notes: notes,
+                customDate: selectedDate
+            };
+
+            if (editingIndex !== null) {
+                // 編集時の上書き用パラメータ
+                payload.action = "editRecord";
+                payload.oldDate = globalRecords[editingIndex].date;
+                payload.oldCategory = globalRecords[editingIndex].category;
+                payload.oldAmount = globalRecords[editingIndex].amount;
+                payload.oldLocation = globalRecords[editingIndex].location;
+                payload.oldNotes = globalRecords[editingIndex].notes;
+            }
+
             try {
                 const response = await fetch(API_URL, {
                     method: "POST",
-                    body: JSON.stringify({
-                        password: currentPin,
-                        type: currentType,
-                        category: category,
-                        amount: amount,
-                        location: location,
-                        notes: notes,
-                        customDate: selectedDate
-                    })
+                    body: JSON.stringify(payload)
                 });
                 const result = await response.json();
                 
                 if (result.status === "success") {
-                    amountInput.value = '';
-                    locationInput.value = '';
-                    notesInput.value = '';
-                    setTodayDate();
+                    cancelEdit(); // 編集をキャンセルして通常モードに戻す
                     await fetchLatestData();
                 } else {
                     alert(result.message);
@@ -489,7 +604,6 @@
             }
             
             addBtn.disabled = false;
-            addBtn.innerText = "データを同期して記録";
         });
     </script>
 </body>
