@@ -42,7 +42,13 @@
         /* 📊 期間指定用プルダウンエリア */
         .period-selector { display: flex; gap: 6px; align-items: center; }
         .period-select { padding: 6px 10px; font-size: 13px; width: auto; background: #ffffff; }
-        .chart-container { background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid var(--border); }
+        .chart-container { background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid var(--border); position: relative; }
+        
+        /* 🔄 グラフドリルダウン用のナビゲーションスタイル */
+        .chart-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 13px; font-weight: bold; }
+        .chart-back-btn { background: #4f46e5; color: white; border: none; padding: 4px 10px; font-size: 11px; border-radius: 20px; cursor: pointer; width: auto; display: none; }
+        .chart-back-btn:hover { background: #3830b9; }
+        .chart-tip { font-size: 11px; color: var(--text-light); text-align: center; margin-top: 8px; display: block; }
         
         button.submit-btn { background-color: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 5px; }
         button.submit-btn:hover { background-color: var(--primary-hover); }
@@ -129,7 +135,14 @@
             </div>
         </h2>
         <div class="chart-container">
+            <!-- 🔄 ドリルダウン時のナビゲーションバー -->
+            <div class="chart-nav">
+                <span id="chart-title">カテゴリー別分析</span>
+                <button id="chart-back-btn" class="chart-back-btn" onclick="drillUp()">👈 全体に戻る</button>
+            </div>
+            <!-- 📊 ドーナツ型グラフを描画するCanvas領域 -->
             <canvas id="myChart" width="400" height="300"></canvas>
+            <span id="chart-tip-text" class="chart-tip">💡 グラフの項目をタップすると店舗別の内訳が見られます</span>
         </div>
 
         <h2>履歴一覧</h2>
@@ -145,7 +158,10 @@
         let serverCategories = { "支出": [], "収入": [] }; 
         let globalRecords = [];
         let myChart = null;
-        let editingIndex = null; // ✏️ 編集中のレコードインデックス(nullの時は新規追加)
+        let editingIndex = null; 
+
+        // 🔄 ドリルダウン（店舗詳細）状態管理
+        let drillDownCategory = null; 
 
         const authBox = document.getElementById('auth-box');
         const appBox = document.getElementById('app-box');
@@ -170,6 +186,10 @@
         
         const selectYear = document.getElementById('select-year');
         const selectMonth = document.getElementById('select-month');
+
+        const chartTitle = document.getElementById('chart-title');
+        const chartBackBtn = document.getElementById('chart-back-btn');
+        const chartTipText = document.getElementById('chart-tip-text');
 
         // 📅 年・月指定セレクターの初期化
         function initPeriodSelectors() {
@@ -226,7 +246,8 @@
             btnIncome.classList.remove('active-in');
             receiptArea.style.display = "block";
             updateCategoryOptions();
-            cancelEdit(); // 切替時に編集モードを解除
+            cancelEdit(); 
+            drillUp(); 
             updateUI(globalRecords);
         });
 
@@ -236,7 +257,8 @@
             btnExpense.classList.remove('active-ex');
             receiptArea.style.display = "none";
             updateCategoryOptions();
-            cancelEdit(); // 切替時に編集モードを解除
+            cancelEdit(); 
+            drillUp(); 
             updateUI(globalRecords);
         });
 
@@ -347,25 +369,59 @@
             loadingStatus.style.display = "none";
         }
 
-        // 🎨 スマート配色カラーパレット自動生成関数 (黄金比 HSLを用いた色自動決定)
-        function generateAutoColors(count) {
+        // 🎨 カテゴリーの固有の色相（Hue）を決定する関数
+        function getCategoryHue(categoryName) {
+            let hash = 0;
+            for (let i = 0; i < categoryName.length; i++) {
+                hash = categoryName.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            // 0〜360度の色相に変換
+            return Math.abs(hash) % 360;
+        }
+
+        // 🎨 全体カテゴリー用のパレット生成（均等に散らばった色相を自動生成）
+        function generateCategoryColors(categories) {
+            return categories.map(cat => {
+                const hue = getCategoryHue(cat);
+                return `hsl(${hue}, 65%, 55%)`; // 鮮やかで見やすい標準の彩度・明度
+            });
+        }
+
+        // 🎨 【新機能】特定のカテゴリー（ドリルダウン先）の同系色グラデーション生成
+        function generateGradientColors(baseCategory, count) {
+            const baseHue = getCategoryHue(baseCategory);
             const colors = [];
-            const goldenRatioConjugate = 0.618033988749895;
-            let h = 0.15; // スタートの色調
+            
+            // 店舗数に合わせて、明度（Lightness）をグラデーション（40%〜75%）にする
+            const minL = 38;
+            const maxL = 72;
+            const step = count > 1 ? (maxL - minL) / (count - 1) : 0;
+
             for (let i = 0; i < count; i++) {
-                h += goldenRatioConjugate;
-                h %= 1;
-                colors.push(`hsl(${Math.floor(h * 360)}, 70%, 60%)`);
+                const l = Math.floor(minL + (step * i));
+                // 同系色（同じベースHue）の明度だけを変えたグラデーションを生成！
+                colors.push(`hsl(${baseHue}, 60%, ${l}%)`);
             }
             return colors;
         }
 
+        // 👈 ドリルダウンを解除して全体表示に戻る関数
+        function drillUp() {
+            drillDownCategory = null;
+            chartTitle.innerText = "カテゴリー別分析";
+            chartBackBtn.style.display = "none";
+            chartTipText.style.display = "block";
+            renderChart();
+        }
+
+        // 📊 期間指定・状態（ドリルダウン有無）で円グラフを描画
         function renderChart() {
             const ctx = document.getElementById('myChart').getContext('2d');
             const targetYear = selectYear.value;
-            const targetMonth = selectMonth.value; // "all" または "01"〜"12"
+            const targetMonth = selectMonth.value;
 
-            const filtered = globalRecords.filter(r => {
+            // 1. 指定の年・月に合致するデータを抽出
+            const baseFiltered = globalRecords.filter(r => {
                 if (r.type !== currentType) return false;
                 const parts = r.date.split('/');
                 if (parts.length < 3) return false;
@@ -379,14 +435,37 @@
                 }
             });
 
-            const totals = {};
-            filtered.forEach(r => {
-                const cat = r.category || "その他";
-                totals[cat] = (totals[cat] || 0) + Number(r.amount);
-            });
+            let labels = [];
+            let dataValues = [];
+            let chartColors = [];
 
-            const labels = Object.keys(totals);
-            const dataValues = Object.values(totals);
+            if (drillDownCategory === null) {
+                // 【通常モード】：カテゴリーごとに集計
+                const totals = {};
+                baseFiltered.forEach(r => {
+                    const cat = r.category || "その他";
+                    totals[cat] = (totals[cat] || 0) + Number(r.amount);
+                });
+                labels = Object.keys(totals);
+                dataValues = Object.values(totals);
+                
+                // カテゴリー固有のバラエティ豊かな色相を割り当て
+                chartColors = generateCategoryColors(labels);
+            } else {
+                // 🌟 【ドリルダウン詳細モード】：同一カテゴリー内の店舗別集計
+                const storeTotals = {};
+                baseFiltered.forEach(r => {
+                    if (r.category === drillDownCategory) {
+                        const storeName = r.location ? r.location.trim() : "未登録店舗";
+                        storeTotals[storeName] = (storeTotals[storeName] || 0) + Number(r.amount);
+                    }
+                });
+                labels = Object.keys(storeTotals);
+                dataValues = Object.values(storeTotals);
+
+                // 🌟 選択したカテゴリー（食費など）のイメージカラーをベースに、同系色グラデーションで統一！
+                chartColors = generateGradientColors(drillDownCategory, labels.length);
+            }
 
             if (myChart) {
                 myChart.destroy();
@@ -404,20 +483,31 @@
                 return;
             }
 
-            // 🎨 カテゴリー数に合わせて美しい色調パレットを自動的に生成！
-            const autoColors = generateAutoColors(labels.length);
-
             myChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: labels,
                     datasets: [{
                         data: dataValues,
-                        backgroundColor: autoColors
+                        backgroundColor: chartColors
                     }]
                 },
                 options: {
                     responsive: true,
+                    onClick: (event, elements) => {
+                        // 全体表示の時にのみタップによるドリルダウンを適用
+                        if (elements.length > 0 && drillDownCategory === null) {
+                            const index = elements[0].index;
+                            const clickedCategory = labels[index];
+                            
+                            drillDownCategory = clickedCategory;
+                            chartTitle.innerText = `📍 [${clickedCategory}] 店舗別詳細`;
+                            chartBackBtn.style.display = "block"; 
+                            chartTipText.style.display = "none";
+                            
+                            renderChart(); 
+                        }
+                    },
                     plugins: {
                         legend: { position: 'bottom' },
                         tooltip: {
@@ -460,7 +550,6 @@
                 const priceColor = r.type === "支出" ? "var(--expense)" : "var(--income)";
                 const badgeClass = r.type === "支出" ? "ex" : "in";
 
-                // 全体データ配列の中の正しいインデックスを探す
                 const realIndex = globalRecords.indexOf(r);
 
                 li.innerHTML = `
@@ -476,7 +565,6 @@
                         <span style="font-weight:bold; font-size:17px; color: ${priceColor}; white-space: nowrap;">
                             ${prefix}${Number(r.amount).toLocaleString()} 円
                         </span>
-                        <!-- ✏️🗑️ 編集・削除ボタン領域 -->
                         <div class="item-actions">
                             <button class="action-btn edit" onclick="startEdit(${realIndex})">✏️ 編集</button>
                             <button class="action-btn delete" onclick="deleteRecord(${realIndex})">🗑️ 削除</button>
@@ -487,12 +575,10 @@
             });
         }
 
-        // ✏️ 編集モードに入る処理
         function startEdit(index) {
             editingIndex = index;
             const item = globalRecords[index];
             
-            // フォームの各項目に値をセット
             const formattedDate = item.date.replace(/\//g, '-');
             dateInput.value = formattedDate;
             categorySelect.value = item.category;
@@ -500,13 +586,11 @@
             locationInput.value = item.location || '';
             notesInput.value = item.notes || '';
             
-            // ボタン表示の切り替え
             addBtn.innerText = "変更を同期して保存";
-            addBtn.style.backgroundColor = "#eab308"; // 黄色系の目立つカラー
+            addBtn.style.backgroundColor = "#eab308"; 
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // ✏️ 編集モードをキャンセル（通常モードに戻す）
         function cancelEdit() {
             editingIndex = null;
             addBtn.innerText = "データを同期して記録";
@@ -517,7 +601,6 @@
             setTodayDate();
         }
 
-        // 🗑️ 削除をGASへ連携する処理
         async function deleteRecord(index) {
             const item = globalRecords[index];
             const confirmMsg = `【削除確認】\n「${item.date} : [${item.category}] ${Number(item.amount).toLocaleString()}円」を削除しますか？\n(スプレッドシートからも完全に消去されます)`;
@@ -565,7 +648,6 @@
             addBtn.disabled = true;
             addBtn.innerText = "暗号化同期中...";
             
-            // 編集か新規追加かに応じてGASに渡すパラメータを調整
             const payload = {
                 password: currentPin,
                 type: currentType,
@@ -577,7 +659,6 @@
             };
 
             if (editingIndex !== null) {
-                // 編集時の上書き用パラメータ
                 payload.action = "editRecord";
                 payload.oldDate = globalRecords[editingIndex].date;
                 payload.oldCategory = globalRecords[editingIndex].category;
@@ -594,7 +675,7 @@
                 const result = await response.json();
                 
                 if (result.status === "success") {
-                    cancelEdit(); // 編集をキャンセルして通常モードに戻す
+                    cancelEdit(); 
                     await fetchLatestData();
                 } else {
                     alert(result.message);
