@@ -450,6 +450,14 @@
             }
         });
 
+        // 🌟 パソコンでEnterキーを押した際にもログインボタンをクリックする処理を追加
+        pinInput.addEventListener('keydown', (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault(); // 余計なページ送信挙動などを防止
+                loginBtn.click();
+            }
+        });
+
         async function fetchLatestData() {
             loadingStatus.style.display = "block";
             try {
