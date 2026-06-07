@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家計簿</title>
+    <title>プレミアム家計簿</title>
     <!-- 📊 グラフ用の外部ライブラリを読み込み -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -17,18 +17,109 @@
             --text: #1e293b;
             --text-light: #64748b;
             --border: #e2e8f0;
+            --auth-grad: linear-gradient(135deg, #eff6ff 0%, #f5f3ff 50%, #faf5ff 100%);
         }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; box-sizing: border-box; }
-        .container { background: var(--card); padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05); width: 100%; max-width: 440px; display: none; }
-        .auth-container { background: var(--card); padding: 28px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); width: 100%; max-width: 320px; text-align: center; }
-        h1 { text-align: center; color: var(--text); font-size: 24px; margin-top: 0; font-weight: 800; letter-spacing: -0.5px; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text); 
+            padding: 16px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            box-sizing: border-box; 
+            transition: background-color 0.5s ease;
+        }
+
+        /* 🔒 ログイン専用のボディ背景（認証前のみ適用） */
+        body.auth-mode {
+            background: var(--auth-grad);
+        }
+
+        /* 🔒 おしゃれになった行動認証コンテナ */
+        .auth-container { 
+            background: rgba(255, 255, 255, 0.85); 
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 32px 24px; 
+            border-radius: 24px; 
+            box-shadow: 0 20px 40px -15px rgba(79, 70, 229, 0.15), 0 1px 3px rgba(0, 0, 0, 0.05); 
+            width: 100%; 
+            max-width: 340px; 
+            text-align: center; 
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .auth-logo {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #818cf8 0%, #4f46e5 100%);
+            color: white;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 18px;
+            margin: 0 auto 20px auto;
+            box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.4);
+        }
+
+        .auth-container h1 { 
+            font-size: 20px; 
+            font-weight: 800; 
+            color: #0f172a; 
+            margin-bottom: 8px;
+            letter-spacing: -0.3px;
+        }
+
+        .auth-subtitle {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-bottom: 24px;
+            line-height: 1.4;
+        }
+
+        /* アプリケーション用コンテナ */
+        .container { 
+            background: var(--card); 
+            padding: 25px; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05); 
+            width: 100%; 
+            max-width: 440px; 
+            display: none; 
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         h2 { color: var(--text); font-size: 18px; margin-top: 25px; border-bottom: 2px solid var(--border); padding-bottom: 6px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
         
         .form-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
         label { font-size: 13px; color: var(--text-light); margin-bottom: -8px; font-weight: 700; }
-        input, select, button { padding: 12px 14px; font-size: 15px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; width: 100%; transition: all 0.2s ease; }
-        input:focus, select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
         
+        /* インプット類の美調整 */
+        input, select, button { padding: 12px 14px; font-size: 15px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; width: 100%; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        input:focus, select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12); }
+        
+        /* PINコード入力欄のスタイリング */
+        .pin-field {
+            background: rgba(241, 245, 249, 0.6);
+            border: 1px solid #cbd5e1;
+            transition: all 0.2s;
+        }
+        .pin-field:focus {
+            background: #ffffff;
+            border-color: var(--primary);
+        }
+
         .type-selector { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 15px; }
         .type-btn { background: #f1f5f9; color: var(--text-light); border: none; border-radius: 0; cursor: pointer; padding: 12px; font-size: 15px; width: 50%; font-weight: 600; }
         .type-btn.active-ex { background-color: var(--expense); color: white; }
@@ -50,9 +141,10 @@
         .chart-back-btn:hover { background: #3830b9; }
         .chart-tip { font-size: 11px; color: var(--text-light); text-align: center; margin-top: 8px; display: block; }
         
-        button.submit-btn { background-color: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 5px; }
-        button.submit-btn:hover { background-color: var(--primary-hover); }
-        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        button.submit-btn { background-color: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 5px; box-shadow: 0 4px 12px -2px rgba(79, 70, 229, 0.3); }
+        button.submit-btn:hover { background-color: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 6px 16px -2px rgba(79, 70, 229, 0.4); }
+        button.submit-btn:active { transform: translateY(0); }
+        button:disabled { background-color: #ccc; cursor: not-allowed; box-shadow: none; }
         
         ul { list-style: none; padding: 0; margin: 0; max-height: 280px; overflow-y: auto; }
         li { background: #ffffff; padding: 12px; margin-bottom: 8px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; border: 1px solid var(--border); border-left: 6px solid #ccc; }
@@ -68,21 +160,26 @@
         .action-btn.delete { color: #dc2626; }
         
         .loading { font-size: 14px; color: var(--text-light); text-align: center; display: none; margin-bottom: 10px; }
-        .error-msg { color: var(--expense); font-size: 14px; margin-top: 10px; }
+        .error-msg { color: var(--expense); font-size: 13px; margin-top: 10px; font-weight: 600; text-align: center; }
         .badge-type { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; color: white; margin-right: 4px; display: inline-block; }
         .badge-type.ex { background-color: var(--expense); }
         .badge-type.in { background-color: var(--income); }
-        .badge-loc { background: #e2e8f0; color: #4a5568; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-right: 4px; }
+        .badge-loc { background: #e2e8f0; color: #4a5568; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; }
         .text-notes { color: var(--text-light); font-size: 12px; display: block; margin-top: 2px; }
     </style>
 </head>
-<body>
+<body class="auth-mode"> <!-- 🔒 初期状態でログイン専用グラデーション背景を適用 -->
 
     <div id="auth-box" class="auth-container">
-        <h1>🔒 PINコードを入力してください</h1>
-        <div class="form-group">
-            <input type="password" id="pin-input" inputmode="numeric" placeholder="PINコード" maxlength="4" style="text-align: center; font-size: 24px; letter-spacing: 5px;">
-            <button id="login-btn" class="submit-btn">入室する</button>
+        <!-- 🔑 アイコン風ロゴマーク -->
+        <div class="auth-logo">🔐</div>
+        <h1>家計簿セキュリティ認証</h1>
+        <div class="auth-subtitle">
+            データを暗号化して同期するため、<br>ご家族共通のPINコードを入力してください。
+        </div>
+        <div class="form-group" style="gap: 16px;">
+            <input type="password" id="pin-input" class="pin-field" inputmode="numeric" placeholder="••••" maxlength="4" style="text-align: center; font-size: 26px; letter-spacing: 12px; padding: 14px;">
+            <button id="login-btn" class="submit-btn" style="padding: 14px;">安全に入室する</button>
             <div id="auth-error" class="error-msg"></div>
         </div>
     </div>
@@ -338,6 +435,7 @@
                     appBox.style.display = "block";
                     document.body.style.alignItems = "flex-start";
                     document.body.style.paddingTop = "20px";
+                    document.body.classList.remove('auth-mode'); // 🔒 アプリログイン成功でグラデーション背景を解除
                     
                     updateCategoryOptions();
                     globalRecords = result.records || [];
@@ -375,7 +473,6 @@
             for (let i = 0; i < categoryName.length; i++) {
                 hash = categoryName.charCodeAt(i) + ((hash << 5) - hash);
             }
-            // 0〜360度の色相に変換
             return Math.abs(hash) % 360;
         }
 
@@ -383,7 +480,7 @@
         function generateCategoryColors(categories) {
             return categories.map(cat => {
                 const hue = getCategoryHue(cat);
-                return `hsl(${hue}, 65%, 55%)`; // 鮮やかで見やすい標準の彩度・明度
+                return `hsl(${hue}, 65%, 55%)`; 
             });
         }
 
@@ -392,14 +489,12 @@
             const baseHue = getCategoryHue(baseCategory);
             const colors = [];
             
-            // 店舗数に合わせて、明度（Lightness）をグラデーション（40%〜75%）にする
             const minL = 38;
             const maxL = 72;
             const step = count > 1 ? (maxL - minL) / (count - 1) : 0;
 
             for (let i = 0; i < count; i++) {
                 const l = Math.floor(minL + (step * i));
-                // 同系色（同じベースHue）の明度だけを変えたグラデーションを生成！
                 colors.push(`hsl(${baseHue}, 60%, ${l}%)`);
             }
             return colors;
@@ -420,7 +515,6 @@
             const targetYear = selectYear.value;
             const targetMonth = selectMonth.value;
 
-            // 1. 指定の年・月に合致するデータを抽出
             const baseFiltered = globalRecords.filter(r => {
                 if (r.type !== currentType) return false;
                 const parts = r.date.split('/');
@@ -440,7 +534,6 @@
             let chartColors = [];
 
             if (drillDownCategory === null) {
-                // 【通常モード】：カテゴリーごとに集計
                 const totals = {};
                 baseFiltered.forEach(r => {
                     const cat = r.category || "その他";
@@ -448,11 +541,8 @@
                 });
                 labels = Object.keys(totals);
                 dataValues = Object.values(totals);
-                
-                // カテゴリー固有のバラエティ豊かな色相を割り当て
                 chartColors = generateCategoryColors(labels);
             } else {
-                // 🌟 【ドリルダウン詳細モード】：同一カテゴリー内の店舗別集計
                 const storeTotals = {};
                 baseFiltered.forEach(r => {
                     if (r.category === drillDownCategory) {
@@ -462,8 +552,6 @@
                 });
                 labels = Object.keys(storeTotals);
                 dataValues = Object.values(storeTotals);
-
-                // 🌟 選択したカテゴリー（食費など）のイメージカラーをベースに、同系色グラデーションで統一！
                 chartColors = generateGradientColors(drillDownCategory, labels.length);
             }
 
@@ -495,7 +583,6 @@
                 options: {
                     responsive: true,
                     onClick: (event, elements) => {
-                        // 全体表示の時にのみタップによるドリルダウンを適用
                         if (elements.length > 0 && drillDownCategory === null) {
                             const index = elements[0].index;
                             const clickedCategory = labels[index];
