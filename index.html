@@ -178,7 +178,8 @@
             データを暗号化して同期するため、<br>ご家族共通のPINコードを入力してください。
         </div>
         <div class="form-group" style="gap: 16px;">
-            <input type="password" id="pin-input" class="pin-field" inputmode="numeric" placeholder="••••" maxlength="4" style="text-align: center; font-size: 26px; letter-spacing: 12px; padding: 14px;">
+            <!-- 🔒 プレースホルダーを「PIN」に変更し、maxlengthを12文字にすることで外見から桁数を見破られないように強化 -->
+            <input type="password" id="pin-input" class="pin-field" inputmode="numeric" placeholder="PIN" maxlength="12" style="text-align: center; font-size: 24px; letter-spacing: 6px; padding: 14px;">
             <button id="login-btn" class="submit-btn" style="padding: 14px;">安全に入室する</button>
             <div id="auth-error" class="error-msg"></div>
         </div>
@@ -450,10 +451,10 @@
             }
         });
 
-        // 🌟 パソコンでEnterキーを押した際にもログインボタンをクリックする処理を追加
+        // 🌟 パソコンでEnterキーを押した際にもログインボタンをクリックする処理
         pinInput.addEventListener('keydown', (e) => {
             if (e.key === "Enter") {
-                e.preventDefault(); // 余計なページ送信挙動などを防止
+                e.preventDefault(); 
                 loginBtn.click();
             }
         });
@@ -484,7 +485,7 @@
             return Math.abs(hash) % 360;
         }
 
-        // 🎨 全体カテゴリー用のパレット生成（均等に散らばった色相を自動生成）
+        // 🎨 全体カテゴリー用のパレット生成
         function generateCategoryColors(categories) {
             return categories.map(cat => {
                 const hue = getCategoryHue(cat);
@@ -492,7 +493,7 @@
             });
         }
 
-        // 🎨 【新機能】特定のカテゴリー（ドリルダウン先）の同系色グラデーション生成
+        // 🎨 特定のカテゴリーの同系色グラデーション生成
         function generateGradientColors(baseCategory, count) {
             const baseHue = getCategoryHue(baseCategory);
             const colors = [];
