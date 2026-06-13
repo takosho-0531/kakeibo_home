@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>家計簿</title>
-    <!-- 📊 グラフ用の外部ライブラリを読み込み -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -34,12 +33,11 @@
             transition: background-color 0.5s ease;
         }
 
-        /* 🔒 ログイン専用のボディ背景（認証前のみ適用） */
         body.auth-mode {
             background: var(--auth-grad);
         }
 
-        /* 🔒 おしゃれになった行動認証コンテナ */
+        /* 🔐 認証画面のカードデザイン */
         .auth-container { 
             background: rgba(255, 255, 255, 0.85); 
             backdrop-filter: blur(16px);
@@ -83,7 +81,7 @@
             line-height: 1.4;
         }
 
-        /* アプリケーション用コンテナ */
+        /* 📱 アプリ本体のコンテナ */
         .container { 
             background: var(--card); 
             padding: 25px; 
@@ -105,7 +103,6 @@
         .form-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
         label { font-size: 13px; color: var(--text-light); margin-bottom: -8px; font-weight: 700; }
         
-        /* 🌟 インプット類のサイズと幅を完全に揃える設定 */
         input, select, button { 
             padding: 12px 14px; 
             font-size: 15px; 
@@ -119,7 +116,7 @@
         }
         input:focus, select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12); }
         
-        /* 日付入力欄（type="date"）に独自のスタイルを適用し、他と完全に見た目を統一 */
+        /* モバイル用のネイティブ日付選択の見た目調整 */
         input[type="date"] {
             -webkit-appearance: none;
             -moz-appearance: none;
@@ -128,7 +125,7 @@
             border: 1px solid var(--border);
         }
         
-        /* PINコード入力欄のスタイリング */
+        /* 認証用PIN入力フィールド */
         .pin-field {
             background: rgba(241, 245, 249, 0.6);
             border: 1px solid #cbd5e1;
@@ -139,32 +136,35 @@
             border-color: var(--primary);
         }
 
+        /* 支出 / 収入 の切り替えタブ */
         .type-selector { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 15px; }
         .type-btn { background: #f1f5f9; color: var(--text-light); border: none; border-radius: 0; cursor: pointer; padding: 12px; font-size: 15px; width: 50%; font-weight: 600; }
         .type-btn.active-ex { background-color: var(--expense); color: white; }
         .type-btn.active-in { background-color: var(--income); color: white; }
         
-        .receipt-zone { background: #f5f3ff; border: 2px dashed #c084fc; padding: 15px; text-align: center; border-radius: 8px; cursor: pointer; margin-bottom: 10px; }
-        .receipt-zone:hover { background: #f3e8ff; }
+        /* 📸 レシートカメラエリア */
+        .receipt-zone { background: #fafafa; border: 2px dashed #cbd5e1; padding: 15px; text-align: center; border-radius: 8px; cursor: pointer; margin-bottom: 10px; }
+        .receipt-zone:hover { background: #f1f5f9; }
         .receipt-icon { font-size: 28px; display: block; margin-bottom: 5px; }
-        .receipt-text { font-size: 13px; color: #7e22ce; font-weight: bold; }
+        .receipt-text { font-size: 13px; color: var(--text-light); font-weight: bold; }
         
-        /* 📊 期間指定用プルダウンエリア */
+        /* 📊 グラフエリアのスタイル */
         .period-selector { display: flex; gap: 6px; align-items: center; }
         .period-select { padding: 6px 10px; font-size: 13px; width: auto; background: #ffffff; }
         .chart-container { background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid var(--border); position: relative; }
         
-        /* 🔄 グラフドリルダウン用のナビゲーションスタイル */
         .chart-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 13px; font-weight: bold; }
         .chart-back-btn { background: #4f46e5; color: white; border: none; padding: 4px 10px; font-size: 11px; border-radius: 20px; cursor: pointer; width: auto; display: none; }
         .chart-back-btn:hover { background: #3830b9; }
         .chart-tip { font-size: 11px; color: var(--text-light); text-align: center; margin-top: 8px; display: block; }
         
+        /* 登録ボタン */
         button.submit-btn { background-color: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 5px; box-shadow: 0 4px 12px -2px rgba(79, 70, 229, 0.3); }
         button.submit-btn:hover { background-color: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 6px 16px -2px rgba(79, 70, 229, 0.4); }
         button.submit-btn:active { transform: translateY(0); }
         button:disabled { background-color: #ccc; cursor: not-allowed; box-shadow: none; }
         
+        /* 📑 履歴リスト */
         ul { list-style: none; padding: 0; margin: 0; max-height: 280px; overflow-y: auto; }
         li { background: #ffffff; padding: 12px; margin-bottom: 8px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; border: 1px solid var(--border); border-left: 6px solid #ccc; }
         li.ex-item { border-left-color: var(--expense); }
@@ -178,6 +178,7 @@
         .action-btn.edit { color: #2563eb; }
         .action-btn.delete { color: #dc2626; }
         
+        /* ステータス表現 */
         .loading { font-size: 14px; color: var(--text-light); text-align: center; display: none; margin-bottom: 10px; }
         .error-msg { color: var(--expense); font-size: 13px; margin-top: 10px; font-weight: 600; text-align: center; }
         .badge-type { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; color: white; margin-right: 4px; display: inline-block; }
@@ -187,17 +188,15 @@
         .text-notes { color: var(--text-light); font-size: 12px; display: block; margin-top: 2px; }
     </style>
 </head>
-<body class="auth-mode"> <!-- 🔒 初期状態でログイン専用グラデーション背景を適用 -->
+<body class="auth-mode">
 
     <div id="auth-box" class="auth-container">
-        <!-- 🔑 アイコン風ロゴマーク -->
         <div class="auth-logo">🔐</div>
         <h1>家計簿セキュリティ認証</h1>
         <div class="auth-subtitle">
             データを暗号化して同期するため、<br>ご家族共通のPINコードを入力してください。
         </div>
         <div class="form-group" style="gap: 16px;">
-            <!-- 🔒 プレースホルダーを「PIN」に変更し、maxlengthを12文字にすることで外見から桁数を見破られないように強化 -->
             <input type="password" id="pin-input" class="pin-field" inputmode="numeric" placeholder="PIN" maxlength="12" style="text-align: center; font-size: 24px; letter-spacing: 6px; padding: 14px;">
             <button id="login-btn" class="submit-btn" style="padding: 14px;">安全に入室する</button>
             <div id="auth-error" class="error-msg"></div>
@@ -213,9 +212,8 @@
         </div>
 
         <div id="receipt-area" class="receipt-zone">
-            <span class="receipt-icon" id="receipt-status-icon">📸</span>
-            <span class="receipt-text" id="receipt-status-text">レシートを撮影して自動入力</span>
-            <input type="file" id="receipt-file" accept="image/*" capture="environment" style="display: none;">
+            <span class="receipt-icon">🛠️</span>
+            <span class="receipt-text">現在実装中しばらくおまちください</span>
         </div>
 
         <div class="form-group">
@@ -237,7 +235,6 @@
             <button id="add-btn" class="submit-btn">データを同期して記録</button>
         </div>
         
-        <!-- 📊 レポートエリア -->
         <h2>
             <span>📊 収支レポート</span>
             <div class="period-selector">
@@ -252,12 +249,10 @@
             </div>
         </h2>
         <div class="chart-container">
-            <!-- 🔄 ドリルダウン時のナビゲーションバー -->
             <div class="chart-nav">
                 <span id="chart-title">カテゴリー別分析</span>
                 <button id="chart-back-btn" class="chart-back-btn" onclick="drillUp()">👈 全体に戻る</button>
             </div>
-            <!-- 📊 ドーナツ型グラフを描画するCanvas領域 -->
             <canvas id="myChart" width="400" height="300"></canvas>
             <span id="chart-tip-text" class="chart-tip">💡 グラフの項目をタップすると店舗別の内訳が見られます</span>
         </div>
@@ -268,6 +263,7 @@
     </div>
 
     <script>
+        // ⚠️ あなたのGASの「ウェブアプリURL」をここに貼り付けてください
         const API_URL = "https://script.google.com/macros/s/AKfycbw9M0Y5blppK97M_HtfCYbSHzJwpOimSkJmVuGB8ARMtynrG_CEp3Lgtdh_kpqdKBS5GQ/exec";
         
         let currentPin = "";
@@ -276,10 +272,9 @@
         let globalRecords = [];
         let myChart = null;
         let editingIndex = null; 
-
-        // 🔄 ドリルダウン（店舗詳細）状態管理
         let drillDownCategory = null; 
 
+        // DOM要素の取得
         const authBox = document.getElementById('auth-box');
         const appBox = document.getElementById('app-box');
         const pinInput = document.getElementById('pin-input');
@@ -289,9 +284,7 @@
         const btnExpense = document.getElementById('btn-expense');
         const btnIncome = document.getElementById('btn-income');
         const receiptArea = document.getElementById('receipt-area');
-        const receiptFile = document.getElementById('receipt-file');
-        const receiptStatusIcon = document.getElementById('receipt-status-icon');
-        const receiptStatusText = document.getElementById('receipt-status-text');
+        
         const dateInput = document.getElementById('date-input');
         const categorySelect = document.getElementById('category');
         const amountInput = document.getElementById('amount');
@@ -308,7 +301,7 @@
         const chartBackBtn = document.getElementById('chart-back-btn');
         const chartTipText = document.getElementById('chart-tip-text');
 
-        // 📅 年・月指定セレクターの初期化
+        // 📅 日付・期間セレクターの初期化
         function initPeriodSelectors() {
             const now = new Date();
             const currentYear = now.getFullYear();
@@ -333,6 +326,7 @@
         }
         setTodayDate();
 
+        // 🗂️ 項目のプルダウン更新
         function updateCategoryOptions() {
             categorySelect.innerHTML = "";
             const list = (serverCategories && serverCategories[currentType]) ? serverCategories[currentType] : [];
@@ -354,9 +348,9 @@
                 }
             });
         }
-
         updateCategoryOptions();
 
+        // タブ切り替え処理
         btnExpense.addEventListener('click', () => {
             currentType = "支出";
             btnExpense.classList.add('active-ex');
@@ -379,63 +373,15 @@
             updateUI(globalRecords);
         });
 
+        // 🛠️ レシートエリアをタップした時の処理（メッセージ表示）
         receiptArea.addEventListener('click', () => {
-            if (receiptStatusText.innerText.includes("解析中")) return;
-            receiptFile.click();
-        });
-
-        receiptFile.addEventListener('change', (e) => {
-            if (e.target.files.length === 0) return;
-            const file = e.target.files[0];
-            
-            receiptStatusIcon.innerText = "⏳";
-            receiptStatusText.innerText = "本物のAIが文字を解析中...";
-            receiptArea.style.background = "#f1f5f9";
-            
-            const reader = new FileReader();
-            reader.onload = async function(event) {
-                const base64Image = event.target.result;
-                
-                try {
-                    const response = await fetch(API_URL, {
-                        method: "POST",
-                        body: JSON.stringify({
-                            password: currentPin,
-                            action: "analyzeReceipt",
-                            imageBlob: base64Image
-                        })
-                    });
-                    const result = await response.json();
-                    
-                    if (result.status === "success") {
-                        if (result.amount) amountInput.value = result.amount;
-                        if (result.location) locationInput.value = result.location;
-                        if (result.notes) notesInput.value = result.notes;
-                        
-                        const options = Array.from(categorySelect.options);
-                        const foodOpt = options.find(opt => opt.value.includes("食費"));
-                        if (foodOpt) categorySelect.value = foodOpt.value;
-                        
-                        alert("✨ 解析成功！金額と店名を自動入力しました。");
-                    } else {
-                        alert("文字の読み取りに失敗しました。手動で入力してください。");
-                    }
-                } catch(err) {
-                    alert("通信エラーが発生しました。");
-                    console.error(err);
-                } finally {
-                    receiptStatusIcon.innerText = "📸";
-                    receiptStatusText.innerText = "レシートを撮影して自動入力";
-                    receiptArea.style.background = "#f8fafc";
-                    receiptFile.value = "";
-                }
-            };
-            reader.readAsDataURL(file);
+            alert("🛠️ 現在実装中しばらくおまちください");
         });
 
         selectYear.addEventListener('change', () => renderChart());
         selectMonth.addEventListener('change', () => renderChart());
 
+        // 🔐 PINセキュリティ認証
         loginBtn.addEventListener('click', async () => {
             const pin = pinInput.value;
             if (!pin) return;
@@ -455,7 +401,7 @@
                     appBox.style.display = "block";
                     document.body.style.alignItems = "flex-start";
                     document.body.style.paddingTop = "20px";
-                    document.body.classList.remove('auth-mode'); // 🔒 アプリログイン成功でグラデーション背景を解除
+                    document.body.classList.remove('auth-mode');
                     
                     updateCategoryOptions();
                     globalRecords = result.records || [];
@@ -465,12 +411,11 @@
                     loginBtn.disabled = false;
                 }
             } catch (e) {
-                authError.innerText = "接続エラー。URLが正しいか確認してください。";
+                authError.innerText = "接続エラー。URLやGASの設定を確認してください。";
                 loginBtn.disabled = false;
             }
         });
 
-        // 🔒 パソコンでEnterキーを押した際にもログインボタンをクリックする処理
         pinInput.addEventListener('keydown', (e) => {
             if (e.key === "Enter") {
                 e.preventDefault(); 
@@ -478,6 +423,7 @@
             }
         });
 
+        // 🔄 最新データの再取得
         async function fetchLatestData() {
             loadingStatus.style.display = "block";
             try {
@@ -495,7 +441,7 @@
             loadingStatus.style.display = "none";
         }
 
-        // 🎨 カテゴリーの固有の色相（Hue）を決定する関数
+        // 📊 グラフデザインの色生成
         function getCategoryHue(categoryName) {
             let hash = 0;
             for (let i = 0; i < categoryName.length; i++) {
@@ -504,7 +450,6 @@
             return Math.abs(hash) % 360;
         }
 
-        // 🎨 全体カテゴリー用のパレット生成
         function generateCategoryColors(categories) {
             return categories.map(cat => {
                 const hue = getCategoryHue(cat);
@@ -512,11 +457,9 @@
             });
         }
 
-        // 🎨 特定のカテゴリーの同系色グラデーション生成
         function generateGradientColors(baseCategory, count) {
             const baseHue = getCategoryHue(baseCategory);
             const colors = [];
-            
             const minL = 38;
             const maxL = 72;
             const step = count > 1 ? (maxL - minL) / (count - 1) : 0;
@@ -528,7 +471,6 @@
             return colors;
         }
 
-        // 👈 ドリルダウンを解除して全体表示に戻る関数
         function drillUp() {
             drillDownCategory = null;
             chartTitle.innerText = "カテゴリー別分析";
@@ -537,7 +479,7 @@
             renderChart();
         }
 
-        // 📊 期間指定・状態（ドリルダウン有無）で円グラフを描画
+        // 🎨 ドーナツグラフの描画
         function renderChart() {
             const ctx = document.getElementById('myChart').getContext('2d');
             const targetYear = selectYear.value;
@@ -614,12 +556,10 @@
                         if (elements.length > 0 && drillDownCategory === null) {
                             const index = elements[0].index;
                             const clickedCategory = labels[index];
-                            
                             drillDownCategory = clickedCategory;
                             chartTitle.innerText = `📍 [${clickedCategory}] 店舗別詳細`;
                             chartBackBtn.style.display = "block"; 
                             chartTipText.style.display = "none";
-                            
                             renderChart(); 
                         }
                     },
@@ -637,36 +577,29 @@
             });
         }
 
+        // 📋 履歴の画面表示の更新
         function updateUI(records) {
             historyList.innerHTML = '';
             renderChart();
-            
             if(!records || records.length === 0) {
                 historyList.innerHTML = '<li style="color:#999; justify-content:center;">データがまだありません</li>';
                 return;
             }
-            
             const filteredRecords = records.filter(r => r.type === currentType);
-            
             if(filteredRecords.length === 0) {
                 historyList.innerHTML = `<li style="color:#999; justify-content:center;">${currentType}のデータはまだありません</li>`;
                 return;
             }
-            
             filteredRecords.forEach(r => {
                 const li = document.createElement('li');
                 li.className = r.type === "支出" ? "ex-item" : "in-item";
-                
                 let metaText = "";
                 if (r.location) metaText += `<span class="badge-loc">📍 ${r.location}</span>`;
                 if (r.notes) metaText += `<span class="text-notes">💬 ${r.notes}</span>`;
-
                 const prefix = r.type === "支出" ? "-" : "+";
                 const priceColor = r.type === "支出" ? "var(--expense)" : "var(--income)";
                 const badgeClass = r.type === "支出" ? "ex" : "in";
-
                 const realIndex = globalRecords.indexOf(r);
-
                 li.innerHTML = `
                     <div class="item-main">
                         <div>
@@ -690,22 +623,22 @@
             });
         }
 
+        // ✏️ 編集モード開始
         function startEdit(index) {
             editingIndex = index;
             const item = globalRecords[index];
-            
             const formattedDate = item.date.replace(/\//g, '-');
             dateInput.value = formattedDate;
             categorySelect.value = item.category;
             amountInput.value = item.amount;
             locationInput.value = item.location || '';
             notesInput.value = item.notes || '';
-            
             addBtn.innerText = "変更を同期して保存";
             addBtn.style.backgroundColor = "#eab308"; 
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
+        // 編集キャンセル・リセット
         function cancelEdit() {
             editingIndex = null;
             addBtn.innerText = "データを同期して記録";
@@ -716,11 +649,10 @@
             setTodayDate();
         }
 
+        // 🗑️ データ削除処理
         async function deleteRecord(index) {
             const item = globalRecords[index];
-            const confirmMsg = `【削除確認】\n「${item.date} : [${item.category}] ${Number(item.amount).toLocaleString()}円」を削除しますか？\n(スプレッドシートからも完全に消去されます)`;
-            if (!confirm(confirmMsg)) return;
-
+            if (!confirm(`「${item.date} : ${Number(item.amount).toLocaleString()}円」を削除しますか？`)) return;
             loadingStatus.style.display = "block";
             try {
                 const response = await fetch(API_URL, {
@@ -738,27 +670,21 @@
                 });
                 const result = await response.json();
                 if (result.status === "success") {
-                    alert("🗑️ データを完全に削除しました。");
                     if (editingIndex === index) cancelEdit();
                     await fetchLatestData();
-                } else {
-                    alert("削除に失敗しました：" + result.message);
                 }
-            } catch(e) {
-                alert("通信エラーが発生しました。");
-            }
+            } catch(e) { alert("削除エラーが発生しました。"); }
             loadingStatus.style.display = "none";
         }
 
+        // ➕ 新規追加 / ✏️ 編集確定の送信
         addBtn.addEventListener('click', async () => {
             const amount = amountInput.value;
             const category = categorySelect.value;
             const location = locationInput.value;
             const notes = notesInput.value;
             const selectedDate = dateInput.value.replace(/-/g, '/');
-            
-            if (!amount) return alert('金額を入力してください');
-            if (!selectedDate) return alert('日付を入力してください');
+            if (!amount || !selectedDate) return alert('入力内容を確認してください');
             
             addBtn.disabled = true;
             addBtn.innerText = "暗号化同期中...";
@@ -783,22 +709,13 @@
             }
 
             try {
-                const response = await fetch(API_URL, {
-                    method: "POST",
-                    body: JSON.stringify(payload)
-                });
+                const response = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
                 const result = await response.json();
-                
                 if (result.status === "success") {
                     cancelEdit(); 
                     await fetchLatestData();
-                } else {
-                    alert(result.message);
-                }
-            } catch (e) {
-                alert("送信中にエラーが発生しました。");
-            }
-            
+                } else { alert(result.message); }
+            } catch (e) { alert("送信エラーが発生しました。"); }
             addBtn.disabled = false;
         });
     </script>
