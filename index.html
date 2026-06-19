@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>家計簿</title>
+    <!-- Chart.js（グラフ描画用） -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -37,7 +38,6 @@
             background: var(--auth-grad);
         }
 
-        /* 🔐 認証画面のカードデザイン */
         .auth-container { 
             background: rgba(255, 255, 255, 0.85); 
             backdrop-filter: blur(16px);
@@ -81,7 +81,6 @@
             line-height: 1.4;
         }
 
-        /* 📱 アプリ本体のコンテナ */
         .container { 
             background: var(--card); 
             padding: 25px; 
@@ -116,7 +115,6 @@
         }
         input:focus, select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12); }
         
-        /* モバイル用のネイティブ日付選択の見た目調整 */
         input[type="date"] {
             -webkit-appearance: none;
             -moz-appearance: none;
@@ -125,7 +123,6 @@
             border: 1px solid var(--border);
         }
         
-        /* 認証用PIN入力フィールド */
         .pin-field {
             background: rgba(241, 245, 249, 0.6);
             border: 1px solid #cbd5e1;
@@ -136,19 +133,57 @@
             border-color: var(--primary);
         }
 
-        /* 支出 / 収入 の切り替えタブ */
         .type-selector { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 15px; }
         .type-btn { background: #f1f5f9; color: var(--text-light); border: none; border-radius: 0; cursor: pointer; padding: 12px; font-size: 15px; width: 50%; font-weight: 600; }
         .type-btn.active-ex { background-color: var(--expense); color: white; }
         .type-btn.active-in { background-color: var(--income); color: white; }
         
-        /* 📸 レシートカメラエリア */
-        .receipt-zone { background: #fafafa; border: 2px dashed #cbd5e1; padding: 15px; text-align: center; border-radius: 8px; cursor: pointer; margin-bottom: 10px; }
-        .receipt-zone:hover { background: #f1f5f9; }
+        .receipt-zone { background: #f5f3ff; border: 2px dashed #c084fc; padding: 15px; text-align: center; border-radius: 8px; cursor: pointer; margin-bottom: 10px; }
+        .receipt-zone:hover { background: #f3e8ff; }
         .receipt-icon { font-size: 28px; display: block; margin-bottom: 5px; }
-        .receipt-text { font-size: 13px; color: var(--text-light); font-weight: bold; }
+        .receipt-text { font-size: 13px; color: #7e22ce; font-weight: bold; }
         
-        /* 📊 グラフエリアのスタイル */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1; pointer-events: auto;
+        }
+        .action-sheet {
+            background: #ffffff;
+            width: 100%;
+            max-width: 440px;
+            border-radius: 24px 24px 0 0;
+            padding: 24px 20px;
+            box-sizing: border-box;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .modal-overlay.active .action-sheet {
+            transform: translateY(0);
+        }
+        .sheet-title {
+            font-size: 14px; color: var(--text-light); text-align: center; margin-bottom: 18px; font-weight: 600;
+        }
+        .sheet-btn {
+            background: #f1f5f9; color: var(--text); border: none; margin-bottom: 12px; font-weight: 600; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
+        }
+        .sheet-btn:hover { background: #e2e8f0; }
+        .sheet-btn.cancel {
+            background: #ffe4e6; color: #b91c1c; margin-top: 8px; margin-bottom: 0;
+        }
+        .sheet-btn.cancel:hover { background: #fecdd3; }
+
         .period-selector { display: flex; gap: 6px; align-items: center; }
         .period-select { padding: 6px 10px; font-size: 13px; width: auto; background: #ffffff; }
         .chart-container { background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid var(--border); position: relative; }
@@ -158,13 +193,11 @@
         .chart-back-btn:hover { background: #3830b9; }
         .chart-tip { font-size: 11px; color: var(--text-light); text-align: center; margin-top: 8px; display: block; }
         
-        /* 登録ボタン */
         button.submit-btn { background-color: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 5px; box-shadow: 0 4px 12px -2px rgba(79, 70, 229, 0.3); }
         button.submit-btn:hover { background-color: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 6px 16px -2px rgba(79, 70, 229, 0.4); }
         button.submit-btn:active { transform: translateY(0); }
         button:disabled { background-color: #ccc; cursor: not-allowed; box-shadow: none; }
         
-        /* 📑 履歴リスト */
         ul { list-style: none; padding: 0; margin: 0; max-height: 280px; overflow-y: auto; }
         li { background: #ffffff; padding: 12px; margin-bottom: 8px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; border: 1px solid var(--border); border-left: 6px solid #ccc; }
         li.ex-item { border-left-color: var(--expense); }
@@ -178,7 +211,6 @@
         .action-btn.edit { color: #2563eb; }
         .action-btn.delete { color: #dc2626; }
         
-        /* ステータス表現 */
         .loading { font-size: 14px; color: var(--text-light); text-align: center; display: none; margin-bottom: 10px; }
         .error-msg { color: var(--expense); font-size: 13px; margin-top: 10px; font-weight: 600; text-align: center; }
         .badge-type { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; color: white; margin-right: 4px; display: inline-block; }
@@ -212,8 +244,11 @@
         </div>
 
         <div id="receipt-area" class="receipt-zone">
-            <span class="receipt-icon">🛠️</span>
-            <span class="receipt-text">【レシートOCR機能】現在実装中です。</span>
+            <span class="receipt-icon" id="receipt-status-icon">📸</span>
+            <span class="receipt-text" id="receipt-status-text">レシートを撮影して自動入力</span>
+            
+            <input type="file" id="receipt-camera" accept="image/*" capture="environment" style="display: none;">
+            <input type="file" id="receipt-album" accept="image/*" style="display: none;">
         </div>
 
         <div class="form-group">
@@ -262,8 +297,17 @@
         <ul id="history-list"></ul>
     </div>
 
+    <div id="upload-modal" class="modal-overlay">
+        <div class="action-sheet">
+            <div class="sheet-title">レシートの読み込み方法を選択</div>
+            <button id="choose-camera" class="sheet-btn">📷 いまカメラで撮影する</button>
+            <button id="choose-album" class="sheet-btn">🖼️ 写真アルバムから選ぶ</button>
+            <button id="close-modal" class="sheet-btn cancel">キャンセル</button>
+        </div>
+    </div>
+
     <script>
-        // ⚠️ あなたのGASの「ウェブアプリURL」をここに貼り付けてください
+        // ⚠️ 新しいデプロイ後のURLにここを書き換えてください
         const API_URL = "https://script.google.com/macros/s/AKfycbw9M0Y5blppK97M_HtfCYbSHzJwpOimSkJmVuGB8ARMtynrG_CEp3Lgtdh_kpqdKBS5GQ/exec";
         
         let currentPin = "";
@@ -274,7 +318,6 @@
         let editingIndex = null; 
         let drillDownCategory = null; 
 
-        // DOM要素の取得
         const authBox = document.getElementById('auth-box');
         const appBox = document.getElementById('app-box');
         const pinInput = document.getElementById('pin-input');
@@ -285,6 +328,16 @@
         const btnIncome = document.getElementById('btn-income');
         const receiptArea = document.getElementById('receipt-area');
         
+        const receiptCamera = document.getElementById('receipt-camera');
+        const receiptAlbum = document.getElementById('receipt-album');
+        
+        const uploadModal = document.getElementById('upload-modal');
+        const chooseCamera = document.getElementById('choose-camera');
+        const chooseAlbum = document.getElementById('choose-album');
+        const closeModal = document.getElementById('close-modal');
+
+        const receiptStatusIcon = document.getElementById('receipt-status-icon');
+        const receiptStatusText = document.getElementById('receipt-status-text');
         const dateInput = document.getElementById('date-input');
         const categorySelect = document.getElementById('category');
         const amountInput = document.getElementById('amount');
@@ -301,7 +354,6 @@
         const chartBackBtn = document.getElementById('chart-back-btn');
         const chartTipText = document.getElementById('chart-tip-text');
 
-        // 📅 日付・期間セレクターの初期化
         function initPeriodSelectors() {
             const now = new Date();
             const currentYear = now.getFullYear();
@@ -326,7 +378,6 @@
         }
         setTodayDate();
 
-        // 🗂️ 項目のプルダウン更新
         function updateCategoryOptions() {
             categorySelect.innerHTML = "";
             const list = (serverCategories && serverCategories[currentType]) ? serverCategories[currentType] : [];
@@ -348,9 +399,9 @@
                 }
             });
         }
+
         updateCategoryOptions();
 
-        // タブ切り替え処理
         btnExpense.addEventListener('click', () => {
             currentType = "支出";
             btnExpense.classList.add('active-ex');
@@ -373,15 +424,143 @@
             updateUI(globalRecords);
         });
 
-        // 🛠️ レシートエリアをタップした時の処理（メッセージ表示）
         receiptArea.addEventListener('click', () => {
-            alert("🛠️ 【レシートOCR機能】現在実装中です。");
+            if (receiptStatusText.innerText.includes("解析中") || receiptStatusText.innerText.includes("読み取り中")) return;
+            uploadModal.classList.add('active');
+        });
+
+        closeModal.addEventListener('click', () => uploadModal.classList.remove('active'));
+        uploadModal.addEventListener('click', (e) => {
+            if (e.target === uploadModal) uploadModal.classList.remove('active');
+        });
+
+        chooseCamera.addEventListener('click', () => {
+            uploadModal.classList.remove('active');
+            receiptCamera.click();
+        });
+
+        chooseAlbum.addEventListener('click', () => {
+            uploadModal.classList.remove('active');
+            receiptAlbum.click();
+        });
+
+        // 🖼️ 画像ファイルをブラウザ側で素早くリサイズし、Base64データ化してGASへ直送する処理
+        async function processReceiptFile(file) {
+            receiptStatusIcon.innerText = "⏳";
+            receiptStatusText.innerText = "画像を処理中...";
+            receiptArea.style.background = "#f1f5f9";
+            
+            try {
+                // 画像をブラウザで読み込み
+                const base64Raw = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.onerror = (err) => reject(err);
+                    reader.readAsDataURL(file);
+                });
+
+                // Googleサーバーへの送信時間を最速にするため、Canvasで画像を軽量にリサイズ・圧縮します
+                const compressedBase64 = await new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        // GoogleのOCRに最適な幅にリサイズしてデータ量を減らします
+                        const MAX_WIDTH = 800;
+                        if (width > MAX_WIDTH) {
+                            height = Math.round(height * (MAX_WIDTH / width));
+                            width = MAX_WIDTH;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        // 画質を少し落としてデータ送信サイズを10分の1以下に圧縮
+                        resolve(canvas.toDataURL('image/jpeg', 0.7));
+                    };
+                    img.onerror = (err) => reject(err);
+                    img.src = base64Raw;
+                });
+
+                receiptStatusText.innerText = "Google高速AIがレシートを解析中...";
+
+                // リサイズしたBase64文字列（プレフィックス "data:image/jpeg;base64," を除く純粋なデータ部分）をGASにPOST
+                const base64DataOnly = compressedBase64.split(',')[1];
+
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        password: currentPin,
+                        action: "analyzeReceipt",
+                        imageBlob: base64DataOnly // GASの超高速Google OCRへ直接画像を渡す
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === "success") {
+                    // 金額、店舗名、メモ、日付の自動割り当て
+                    if (result.amount && result.amount !== "0") amountInput.value = result.amount;
+                    if (result.location) locationInput.value = result.location;
+                    if (result.notes) notesInput.value = result.notes;
+                    
+                    if (result.date) {
+                        const formattedDate = result.date.replace(/\//g, '-');
+                        dateInput.value = formattedDate;
+                    }
+                    
+                    // スプレッドシートの設定からAIが判定した最適なカテゴリをマッチングして選択
+                    if (result.category) {
+                        let exists = false;
+                        for (let i = 0; i < categorySelect.options.length; i++) {
+                            if (categorySelect.options[i].value === result.category) {
+                                categorySelect.value = result.category;
+                                exists = true;
+                                break;
+                            }
+                        }
+                        if (!exists && categorySelect.options.length > 0) {
+                            const opt = document.createElement('option');
+                            opt.value = result.category;
+                            opt.innerText = result.category;
+                            categorySelect.appendChild(opt);
+                            categorySelect.value = result.category;
+                        }
+                    }
+                    
+                    alert("✨ 解析大成功！すべての項目を自動入力しました。確認して「記録」を押してください！");
+                } else {
+                    alert("AIによるデータ整理に失敗しました。手入力をお試しください。\nエラー: " + (result.message || "不明なエラー"));
+                }
+            } catch(err) {
+                alert("通信エラーが発生しました。インターネット環境をお確かめください。");
+                console.error(err);
+            } finally {
+                receiptStatusIcon.innerText = "📸";
+                receiptStatusText.innerText = "レシートを撮影して自動入力";
+                receiptArea.style.background = "#f8fafc";
+                receiptCamera.value = "";
+                receiptAlbum.value = "";
+            }
+        }
+
+        receiptCamera.addEventListener('change', (e) => {
+            if (e.target.files.length === 0) return;
+            processReceiptFile(e.target.files[0]);
+        });
+
+        receiptAlbum.addEventListener('change', (e) => {
+            if (e.target.files.length === 0) return;
+            processReceiptFile(e.target.files[0]);
         });
 
         selectYear.addEventListener('change', () => renderChart());
         selectMonth.addEventListener('change', () => renderChart());
 
-        // 🔐 PINセキュリティ認証
         loginBtn.addEventListener('click', async () => {
             const pin = pinInput.value;
             if (!pin) return;
@@ -411,7 +590,7 @@
                     loginBtn.disabled = false;
                 }
             } catch (e) {
-                authError.innerText = "接続エラー。URLやGASの設定を確認してください。";
+                authError.innerText = "接続エラー。URLが正しいか確認してください。";
                 loginBtn.disabled = false;
             }
         });
@@ -423,7 +602,6 @@
             }
         });
 
-        // 🔄 最新データの再取得
         async function fetchLatestData() {
             loadingStatus.style.display = "block";
             try {
@@ -441,7 +619,6 @@
             loadingStatus.style.display = "none";
         }
 
-        // 📊 グラフデザインの色生成
         function getCategoryHue(categoryName) {
             let hash = 0;
             for (let i = 0; i < categoryName.length; i++) {
@@ -479,7 +656,6 @@
             renderChart();
         }
 
-        // 🎨 ドーナツグラフの描画
         function renderChart() {
             const ctx = document.getElementById('myChart').getContext('2d');
             const targetYear = selectYear.value;
@@ -577,7 +753,6 @@
             });
         }
 
-        // 📋 履歴の画面表示の更新
         function updateUI(records) {
             historyList.innerHTML = '';
             renderChart();
@@ -623,7 +798,6 @@
             });
         }
 
-        // ✏️ 編集モード開始
         function startEdit(index) {
             editingIndex = index;
             const item = globalRecords[index];
@@ -638,7 +812,6 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // 編集キャンセル・リセット
         function cancelEdit() {
             editingIndex = null;
             addBtn.innerText = "データを同期して記録";
@@ -649,7 +822,6 @@
             setTodayDate();
         }
 
-        // 🗑️ データ削除処理
         async function deleteRecord(index) {
             const item = globalRecords[index];
             if (!confirm(`「${item.date} : ${Number(item.amount).toLocaleString()}円」を削除しますか？`)) return;
@@ -673,11 +845,10 @@
                     if (editingIndex === index) cancelEdit();
                     await fetchLatestData();
                 }
-            } catch(e) { alert("削除エラーが発生しました。"); }
+            } catch(e) { alert("削除エラー"); }
             loadingStatus.style.display = "none";
         }
 
-        // ➕ 新規追加 / ✏️ 編集確定の送信
         addBtn.addEventListener('click', async () => {
             const amount = amountInput.value;
             const category = categorySelect.value;
@@ -715,7 +886,7 @@
                     cancelEdit(); 
                     await fetchLatestData();
                 } else { alert(result.message); }
-            } catch (e) { alert("送信エラーが発生しました。"); }
+            } catch (e) { alert("送信エラー"); }
             addBtn.disabled = false;
         });
     </script>
