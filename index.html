@@ -539,7 +539,13 @@
                     // 金額、店舗名、日付の自動割り当て
                     if (result.amount && result.amount !== "0") amountInput.value = result.amount;
                     if (result.location) locationInput.value = result.location;
-                    if (result.notes) notesInput.value = result.notes;
+                    
+                    // notes項目が安全に定義されているか確認
+                    if (result.notes) {
+                        notesInput.value = result.notes;
+                    } else {
+                        notesInput.value = "";
+                    }
                     
                     if (result.date) {
                         const formattedDate = result.date.replace(/\//g, '-');
@@ -567,10 +573,10 @@
                     
                     alert("✨ 解析大成功！すべての項目を自動入力しました。確認して「記録」を押してください！");
                 } else {
-                    alert("AIによるデータ整理に失敗しました。手入力をお試しください。");
+                    alert("AIによるデータ整理に失敗しました。手入力をお試しください。\nエラー: " + (result.message || "スプレッドシートやAPIの設定を確認してください。"));
                 }
             } catch(err) {
-                alert("通信エラーが発生しました。インターネット環境をお確かめください。");
+                alert("通信エラーが発生しました。インターネット環境をお確かめいただくか、GASのウェブアプリURLが正しく公開（全員アクセス可能）になっているかご確認ください。");
                 console.error(err);
             } finally {
                 receiptStatusIcon.innerText = "📸";
