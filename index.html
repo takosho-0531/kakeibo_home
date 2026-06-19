@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>家計簿</title>
     <!-- Chart.js（グラフ描画用） -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -24,10 +24,10 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
             background-color: var(--bg); 
             color: var(--text); 
-            padding: 16px; 
+            padding: 12px; 
             display: flex; 
             justify-content: center; 
-            align-items: center; 
+            align-items: flex-start; /* スマホでスクロール時に上が切れるのを防ぐ */
             min-height: 100vh; 
             margin: 0; 
             box-sizing: border-box; 
@@ -36,13 +36,14 @@
 
         body.auth-mode {
             background: var(--auth-grad);
+            align-items: center; /* ログイン画面のみ中央揃え */
         }
 
         .auth-container { 
-            background: rgba(255, 255, 255, 0.85); 
+            background: rgba(255, 255, 255, 0.9); 
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            padding: 32px 24px; 
+            padding: 32px 20px; 
             border-radius: 24px; 
             box-shadow: 0 20px 40px -15px rgba(79, 70, 229, 0.15), 0 1px 3px rgba(0, 0, 0, 0.05); 
             width: 100%; 
@@ -50,6 +51,7 @@
             text-align: center; 
             border: 1px solid rgba(255, 255, 255, 0.6);
             animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            box-sizing: border-box;
         }
 
         .auth-logo {
@@ -83,13 +85,14 @@
 
         .container { 
             background: var(--card); 
-            padding: 25px; 
-            border-radius: 16px; 
+            padding: 20px 16px; 
+            border-radius: 20px; 
             box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05); 
             width: 100%; 
             max-width: 440px; 
             display: none; 
             animation: fadeIn 0.5s ease-out;
+            box-sizing: border-box;
         }
 
         @keyframes fadeIn {
@@ -97,28 +100,46 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        h2 { color: var(--text); font-size: 18px; margin-top: 25px; border-bottom: 2px solid var(--border); padding-bottom: 6px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+        h1 {
+            font-size: 22px;
+            margin-top: 0;
+            margin-bottom: 18px;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        h2 { 
+            color: var(--text); 
+            font-size: 16px; 
+            margin-top: 25px; 
+            border-bottom: 2px solid var(--border); 
+            padding-bottom: 8px; 
+            font-weight: 700; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
         
         .form-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
-        label { font-size: 13px; color: var(--text-light); margin-bottom: -8px; font-weight: 700; }
+        label { font-size: 12px; color: var(--text-light); margin-bottom: -8px; font-weight: 700; }
         
         input, select, button { 
             padding: 12px 14px; 
             font-size: 15px; 
             border: 1px solid var(--border); 
-            border-radius: 8px; 
+            border-radius: 10px; 
             box-sizing: border-box; 
             width: 100%; 
             background-color: #ffffff;
             color: var(--text);
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+            -webkit-appearance: none; /* iOS Safariでの丸みや影をリセット */
         }
         input:focus, select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12); }
         
         input[type="date"] {
-            -webkit-appearance: none;
-            -moz-appearance: none;
             appearance: none;
+            -webkit-appearance: none;
             background-color: #ffffff;
             border: 1px solid var(--border);
         }
@@ -133,62 +154,30 @@
             border-color: var(--primary);
         }
 
-        .type-selector { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 15px; }
-        .type-btn { background: #f1f5f9; color: var(--text-light); border: none; border-radius: 0; cursor: pointer; padding: 12px; font-size: 15px; width: 50%; font-weight: 600; }
+        .type-selector { display: flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 15px; }
+        .type-btn { background: #f1f5f9; color: var(--text-light); border: none; border-radius: 0; cursor: pointer; padding: 12px; font-size: 15px; width: 50%; font-weight: 700; }
         .type-btn.active-ex { background-color: var(--expense); color: white; }
         .type-btn.active-in { background-color: var(--income); color: white; }
         
-        .receipt-zone { background: #f5f3ff; border: 2px dashed #c084fc; padding: 15px; text-align: center; border-radius: 8px; cursor: pointer; margin-bottom: 10px; }
-        .receipt-zone:hover { background: #f3e8ff; }
-        .receipt-icon { font-size: 28px; display: block; margin-bottom: 5px; }
+        .receipt-zone { 
+            background: #f5f3ff; 
+            border: 2px dashed #c084fc; 
+            padding: 16px 12px; 
+            text-align: center; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            margin-bottom: 12px; 
+            transition: all 0.2s;
+        }
+        .receipt-zone:hover { background: #f3e8ff; border-color: #a855f7; }
+        .receipt-icon { font-size: 32px; display: block; margin-bottom: 6px; }
         .receipt-text { font-size: 13px; color: #7e22ce; font-weight: bold; }
-        
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.4);
-            backdrop-filter: blur(4px);
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0; pointer-events: none;
-            transition: opacity 0.25s ease;
-        }
-        .modal-overlay.active {
-            opacity: 1; pointer-events: auto;
-        }
-        .action-sheet {
-            background: #ffffff;
-            width: 100%;
-            max-width: 440px;
-            border-radius: 24px 24px 0 0;
-            padding: 24px 20px;
-            box-sizing: border-box;
-            transform: translateY(100%);
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.1);
-        }
-        .modal-overlay.active .action-sheet {
-            transform: translateY(0);
-        }
-        .sheet-title {
-            font-size: 14px; color: var(--text-light); text-align: center; margin-bottom: 18px; font-weight: 600;
-        }
-        .sheet-btn {
-            background: #f1f5f9; color: var(--text); border: none; margin-bottom: 12px; font-weight: 600; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
-        }
-        .sheet-btn:hover { background: #e2e8f0; }
-        .sheet-btn.cancel {
-            background: #ffe4e6; color: #b91c1c; margin-top: 8px; margin-bottom: 0;
-        }
-        .sheet-btn.cancel:hover { background: #fecdd3; }
 
-        .period-selector { display: flex; gap: 6px; align-items: center; }
-        .period-select { padding: 6px 10px; font-size: 13px; width: auto; background: #ffffff; }
-        .chart-container { background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid var(--border); position: relative; }
+        .period-selector { display: flex; gap: 4px; align-items: center; }
+        .period-select { padding: 6px 8px; font-size: 12px; width: auto; background: #ffffff; border-radius: 8px; }
+        .chart-container { background: #f8fafc; padding: 12px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border); position: relative; }
         
-        .chart-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 13px; font-weight: bold; }
+        .chart-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 12px; font-weight: bold; }
         .chart-back-btn { background: #4f46e5; color: white; border: none; padding: 4px 10px; font-size: 11px; border-radius: 20px; cursor: pointer; width: auto; display: none; }
         .chart-back-btn:hover { background: #3830b9; }
         .chart-tip { font-size: 11px; color: var(--text-light); text-align: center; margin-top: 8px; display: block; }
@@ -198,26 +187,97 @@
         button.submit-btn:active { transform: translateY(0); }
         button:disabled { background-color: #ccc; cursor: not-allowed; box-shadow: none; }
         
-        ul { list-style: none; padding: 0; margin: 0; max-height: 280px; overflow-y: auto; }
-        li { background: #ffffff; padding: 12px; margin-bottom: 8px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; border: 1px solid var(--border); border-left: 6px solid #ccc; }
+        ul { list-style: none; padding: 0; margin: 0; max-height: 320px; overflow-y: auto; }
+        li { 
+            background: #ffffff; 
+            padding: 12px; 
+            margin-bottom: 8px; 
+            border-radius: 10px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            font-size: 14px; 
+            border: 1px solid var(--border); 
+            border-left: 6px solid #ccc;
+            gap: 12px; /* 要素間のスキマを設けてギチギチ感を防ぐ */
+            box-sizing: border-box;
+        }
         li.ex-item { border-left-color: var(--expense); }
         li.in-item { border-left-color: var(--income); }
         
-        .item-main { display: flex; flex-direction: column; gap: 4px; flex-grow: 1; }
-        .item-action-area { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
-        .item-actions { display: flex; gap: 6px; }
-        .action-btn { background: #f1f5f9; border: 1px solid var(--border); cursor: pointer; padding: 4px 8px; font-size: 12px; border-radius: 6px; width: auto; display: flex; align-items: center; justify-content: center; }
+        .item-main { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 4px; 
+            flex: 1; /* 横幅いっぱいに広がるようにする */
+            min-width: 0; /* 文字省略(truncate)を機能させるために必要 */
+        }
+        .item-category-line {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .item-title {
+            font-size: 14px;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .item-action-area { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: flex-end; 
+            gap: 6px; 
+            flex-shrink: 0; /* 幅が勝手に縮まないように固定 */
+        }
+        .item-amount-text {
+            font-weight: 800; 
+            font-size: 16px; 
+            white-space: nowrap;
+        }
+        .item-actions { 
+            display: flex; 
+            gap: 4px; 
+        }
+        .action-btn { 
+            background: #f1f5f9; 
+            border: 1px solid var(--border); 
+            cursor: pointer; 
+            padding: 6px 10px; 
+            font-size: 11px; 
+            border-radius: 6px; 
+            width: auto; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 2px;
+            font-weight: 600;
+        }
         .action-btn:hover { background: #e2e8f0; }
         .action-btn.edit { color: #2563eb; }
         .action-btn.delete { color: #dc2626; }
         
         .loading { font-size: 14px; color: var(--text-light); text-align: center; display: none; margin-bottom: 10px; }
         .error-msg { color: var(--expense); font-size: 13px; margin-top: 10px; font-weight: 600; text-align: center; }
-        .badge-type { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; color: white; margin-right: 4px; display: inline-block; }
+        .badge-type { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; color: white; display: inline-block; white-space: nowrap; }
         .badge-type.ex { background-color: var(--expense); }
         .badge-type.in { background-color: var(--income); }
-        .badge-loc { background: #e2e8f0; color: #4a5568; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-        .text-notes { color: var(--text-light); font-size: 12px; display: block; margin-top: 2px; }
+        .badge-loc { 
+            background: #e2e8f0; 
+            color: #4a5568; 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            font-size: 10px; 
+            font-weight: 600; 
+            display: inline-block;
+            max-width: 130px; /* 長い店名を省略 */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .text-notes { color: var(--text-light); font-size: 11px; display: block; margin-top: 2px; }
     </style>
 </head>
 <body class="auth-mode">
@@ -243,12 +303,13 @@
             <button type="button" id="btn-income" class="type-btn">収入</button>
         </div>
 
+        <!-- 📸 タップするとOS標準のファイル選択（カメラ / 写真アルバム）が直接起動します -->
         <div id="receipt-area" class="receipt-zone">
             <span class="receipt-icon" id="receipt-status-icon">📸</span>
             <span class="receipt-text" id="receipt-status-text">レシートを撮影して自動入力</span>
             
-            <input type="file" id="receipt-camera" accept="image/*" capture="environment" style="display: none;">
-            <input type="file" id="receipt-album" accept="image/*" style="display: none;">
+            <!-- capture属性をつけないことで、カメラとアルバムの選択をOSが勝手にやってくれます -->
+            <input type="file" id="receipt-file" accept="image/*" style="display: none;">
         </div>
 
         <div class="form-group">
@@ -288,22 +349,15 @@
                 <span id="chart-title">カテゴリー別分析</span>
                 <button id="chart-back-btn" class="chart-back-btn" onclick="drillUp()">👈 全体に戻る</button>
             </div>
-            <canvas id="myChart" width="400" height="300"></canvas>
+            <div style="position: relative; height: 260px; width: 100%;">
+                <canvas id="myChart"></canvas>
+            </div>
             <span id="chart-tip-text" class="chart-tip">💡 グラフの項目をタップすると店舗別の内訳が見られます</span>
         </div>
 
         <h2>履歴一覧</h2>
         <div id="loading-status" class="loading">データを最新に同期中...</div>
         <ul id="history-list"></ul>
-    </div>
-
-    <div id="upload-modal" class="modal-overlay">
-        <div class="action-sheet">
-            <div class="sheet-title">レシートの読み込み方法を選択</div>
-            <button id="choose-camera" class="sheet-btn">📷 いまカメラで撮影する</button>
-            <button id="choose-album" class="sheet-btn">🖼️ 写真アルバムから選ぶ</button>
-            <button id="close-modal" class="sheet-btn cancel">キャンセル</button>
-        </div>
     </div>
 
     <script>
@@ -327,15 +381,8 @@
         const btnExpense = document.getElementById('btn-expense');
         const btnIncome = document.getElementById('btn-income');
         const receiptArea = document.getElementById('receipt-area');
+        const receiptFile = document.getElementById('receipt-file');
         
-        const receiptCamera = document.getElementById('receipt-camera');
-        const receiptAlbum = document.getElementById('receipt-album');
-        
-        const uploadModal = document.getElementById('upload-modal');
-        const chooseCamera = document.getElementById('choose-camera');
-        const chooseAlbum = document.getElementById('choose-album');
-        const closeModal = document.getElementById('close-modal');
-
         const receiptStatusIcon = document.getElementById('receipt-status-icon');
         const receiptStatusText = document.getElementById('receipt-status-text');
         const dateInput = document.getElementById('date-input');
@@ -424,24 +471,10 @@
             updateUI(globalRecords);
         });
 
+        // タップした時に非表示のinput[type="file"]を直接クリックし、OS標準のメニューを表示させます
         receiptArea.addEventListener('click', () => {
-            if (receiptStatusText.innerText.includes("解析中") || receiptStatusText.innerText.includes("読み取り中")) return;
-            uploadModal.classList.add('active');
-        });
-
-        closeModal.addEventListener('click', () => uploadModal.classList.remove('active'));
-        uploadModal.addEventListener('click', (e) => {
-            if (e.target === uploadModal) uploadModal.classList.remove('active');
-        });
-
-        chooseCamera.addEventListener('click', () => {
-            uploadModal.classList.remove('active');
-            receiptCamera.click();
-        });
-
-        chooseAlbum.addEventListener('click', () => {
-            uploadModal.classList.remove('active');
-            receiptAlbum.click();
+            if (receiptStatusText.innerText.includes("解析中") || receiptStatusText.innerText.includes("処理中")) return;
+            receiptFile.click();
         });
 
         // 🖼️ 画像ファイルをブラウザ側で素早くリサイズし、Base64データ化してGASへ直送する処理
@@ -503,7 +536,7 @@
                 const result = await response.json();
                 
                 if (result.status === "success") {
-                    // 金額、店舗名、メモ、日付の自動割り当て
+                    // 金額、店舗名、日付の自動割り当て
                     if (result.amount && result.amount !== "0") amountInput.value = result.amount;
                     if (result.location) locationInput.value = result.location;
                     if (result.notes) notesInput.value = result.notes;
@@ -534,7 +567,7 @@
                     
                     alert("✨ 解析大成功！すべての項目を自動入力しました。確認して「記録」を押してください！");
                 } else {
-                    alert("AIによるデータ整理に失敗しました。手入力をお試しください。\nエラー: " + (result.message || "不明なエラー"));
+                    alert("AIによるデータ整理に失敗しました。手入力をお試しください。");
                 }
             } catch(err) {
                 alert("通信エラーが発生しました。インターネット環境をお確かめください。");
@@ -543,17 +576,12 @@
                 receiptStatusIcon.innerText = "📸";
                 receiptStatusText.innerText = "レシートを撮影して自動入力";
                 receiptArea.style.background = "#f8fafc";
-                receiptCamera.value = "";
-                receiptAlbum.value = "";
+                receiptFile.value = ""; // 入力値をリセットして再アップロード可能に
             }
         }
 
-        receiptCamera.addEventListener('change', (e) => {
-            if (e.target.files.length === 0) return;
-            processReceiptFile(e.target.files[0]);
-        });
-
-        receiptAlbum.addEventListener('change', (e) => {
+        // OS標準のダイアログからファイルが選ばれた瞬間に起動
+        receiptFile.addEventListener('change', (e) => {
             if (e.target.files.length === 0) return;
             processReceiptFile(e.target.files[0]);
         });
@@ -712,7 +740,11 @@
                         labels: ['データなし'],
                         datasets: [{ data: [1], backgroundColor: ['#e2e8f0'] }]
                     },
-                    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } } 
+                    }
                 });
                 return;
             }
@@ -728,6 +760,7 @@
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     onClick: (event, elements) => {
                         if (elements.length > 0 && drillDownCategory === null) {
                             const index = elements[0].index;
@@ -740,7 +773,7 @@
                         }
                     },
                     plugins: {
-                        legend: { position: 'bottom' },
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
@@ -768,29 +801,35 @@
             filteredRecords.forEach(r => {
                 const li = document.createElement('li');
                 li.className = r.type === "支出" ? "ex-item" : "in-item";
-                let metaText = "";
-                if (r.location) metaText += `<span class="badge-loc">📍 ${r.location}</span>`;
-                if (r.notes) metaText += `<span class="text-notes">💬 ${r.notes}</span>`;
+                
+                let metaBadges = "";
+                if (r.location) {
+                    metaBadges += `<span class="badge-loc" title="${r.location}">📍 ${r.location}</span>`;
+                }
+                
                 const prefix = r.type === "支出" ? "-" : "+";
                 const priceColor = r.type === "支出" ? "var(--expense)" : "var(--income)";
                 const badgeClass = r.type === "支出" ? "ex" : "in";
                 const realIndex = globalRecords.indexOf(r);
+                
                 li.innerHTML = `
                     <div class="item-main">
-                        <div>
+                        <div class="item-category-line">
                             <span class="badge-type ${badgeClass}">[${r.type}]</span>
-                            <strong style="font-size:15px;">${r.category || 'その他'}</strong>
+                            <span class="item-title">${r.category || 'その他'}</span>
                         </div>
-                        <div style="margin-top: 4px; min-height: 14px;">${metaText}</div>
+                        <div style="margin-top: 4px; display: flex; align-items: center; gap: 4px;">
+                            ${metaBadges}
+                        </div>
                         <span style="font-size:10px; color:#aaa; display:block; margin-top:2px;">${r.date}</span>
                     </div> 
                     <div class="item-action-area">
-                        <span style="font-weight:bold; font-size:17px; color: ${priceColor}; white-space: nowrap;">
+                        <span class="item-amount-text" style="color: ${priceColor};">
                             ${prefix}${Number(r.amount).toLocaleString()} 円
                         </span>
                         <div class="item-actions">
-                            <button class="action-btn edit" onclick="startEdit(${realIndex})">✏️ 編集</button>
-                            <button class="action-btn delete" onclick="deleteRecord(${realIndex})">🗑️ 削除</button>
+                            <button class="action-btn edit" onclick="startEdit(${realIndex})">✏️</button>
+                            <button class="action-btn delete" onclick="deleteRecord(${realIndex})">🗑️</button>
                         </div>
                     </div>
                 `;
