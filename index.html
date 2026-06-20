@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>家計簿</title>
-    <script src="[https://cdn.jsdelivr.net/npm/chart.js](https://cdn.jsdelivr.net/npm/chart.js)"></script>
+    <!-- Chart.js（グラフ描画用） -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --primary: #4f46e5;
@@ -26,7 +27,7 @@
             padding: 12px; 
             display: flex; 
             justify-content: center; 
-            align-items: flex-start; 
+            align-items: flex-start; /* スマホでスクロール時に上が切れるのを防ぐ */
             min-height: 100vh; 
             margin: 0; 
             box-sizing: border-box; 
@@ -35,7 +36,7 @@
 
         body.auth-mode {
             background: var(--auth-grad);
-            align-items: center; 
+            align-items: center; /* ログイン画面のみ中央揃え */
         }
 
         .auth-container { 
@@ -122,7 +123,7 @@
         .form-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
         label { font-size: 12px; color: var(--text-light); margin-bottom: -8px; font-weight: 700; }
         
-        input, select, textarea, button { 
+        input, select, button { 
             padding: 12px 14px; 
             font-size: 15px; 
             border: 1px solid var(--border); 
@@ -132,14 +133,9 @@
             background-color: #ffffff;
             color: var(--text);
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
-            -webkit-appearance: none; 
+            -webkit-appearance: none; /* iOS Safariでの丸みや影をリセット */
         }
-        textarea {
-            resize: vertical;
-            min-height: 80px;
-            font-family: inherit;
-        }
-        input:focus, select:focus, textarea:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12); }
+        input:focus, select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12); }
         
         input[type="date"] {
             appearance: none;
@@ -203,7 +199,7 @@
             font-size: 14px; 
             border: 1px solid var(--border); 
             border-left: 6px solid #ccc;
-            gap: 12px; 
+            gap: 12px; /* 要素間のスキマを設けてギチギチ感を防ぐ */
             box-sizing: border-box;
         }
         li.ex-item { border-left-color: var(--expense); }
@@ -213,8 +209,8 @@
             display: flex; 
             flex-direction: column; 
             gap: 4px; 
-            flex: 1; 
-            min-width: 0; 
+            flex: 1; /* 横幅いっぱいに広がるようにする */
+            min-width: 0; /* 文字省略(truncate)を機能させるために必要 */
         }
         .item-category-line {
             display: flex;
@@ -234,7 +230,7 @@
             flex-direction: column; 
             align-items: flex-end; 
             gap: 6px; 
-            flex-shrink: 0; 
+            flex-shrink: 0; /* 幅が勝手に縮まないように固定 */
         }
         .item-amount-text {
             font-weight: 800; 
@@ -276,64 +272,12 @@
             font-size: 10px; 
             font-weight: 600; 
             display: inline-block;
-            max-width: 130px; 
+            max-width: 130px; /* 長い店名を省略 */
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        .text-notes { color: var(--text-light); font-size: 11px; display: block; margin-top: 2px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 200px; }
-
-        /* 画面切り替え（詳細モーダル）用スタイル */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            padding: 16px;
-            box-sizing: border-box;
-        }
-        .modal-content {
-            background: #ffffff;
-            border-radius: 20px;
-            padding: 20px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
-            animation: fadeIn 0.3s ease;
-        }
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 10px;
-        }
-        .modal-title {
-            font-size: 16px;
-            font-weight: 800;
-        }
-        .modal-close {
-            background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-light); width: auto; padding: 0;
-        }
-        .modal-body-list {
-            max-height: 260px;
-            overflow-y: auto;
-            margin-bottom: 10px;
-        }
-        .detail-row {
-            background: #f8fafc;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 12px;
-            margin-bottom: 8px;
-            font-size: 13px;
-        }
+        .text-notes { color: var(--text-light); font-size: 11px; display: block; margin-top: 2px; }
     </style>
 </head>
 <body class="auth-mode">
@@ -359,9 +303,12 @@
             <button type="button" id="btn-income" class="type-btn">収入</button>
         </div>
 
+        <!-- 📸 タップするとOS標準のファイル選択（カメラ / 写真アルバム）が直接起動します -->
         <div id="receipt-area" class="receipt-zone">
             <span class="receipt-icon" id="receipt-status-icon">📸</span>
             <span class="receipt-text" id="receipt-status-text">レシートを撮影して自動入力</span>
+            
+            <!-- capture属性をつけないことで、カメラとアルバムの選択をOSが勝手にやってくれます -->
             <input type="file" id="receipt-file" accept="image/*" style="display: none;">
         </div>
 
@@ -379,7 +326,7 @@
             <input type="text" id="location" placeholder="場所（例: スーパー、Amazon）">
 
             <label for="notes">💬 メモ</label>
-            <textarea id="notes" placeholder="メモ・備考（自由入力用の広い枠です）"></textarea>
+            <input type="text" id="notes" placeholder="メモ・備考（自由入力）">
 
             <button id="add-btn" class="submit-btn">データを同期して記録</button>
         </div>
@@ -405,7 +352,7 @@
             <div style="position: relative; height: 260px; width: 100%;">
                 <canvas id="myChart"></canvas>
             </div>
-            <span id="chart-tip-text" class="chart-tip">💡 グラフの項目（または凡例）をタップすると詳細を確認・編集できます</span>
+            <span id="chart-tip-text" class="chart-tip">💡 グラフの項目をタップすると店舗別の内訳が見られます</span>
         </div>
 
         <h2>履歴一覧</h2>
@@ -413,19 +360,9 @@
         <ul id="history-list"></ul>
     </div>
 
-    <div id="detail-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span id="modal-category-title" class="modal-title">項目詳細一覧</span>
-                <button class="modal-close" onclick="closeModal()">✕</button>
-            </div>
-            <div id="modal-list-body" class="modal-body-list"></div>
-        </div>
-    </div>
-
     <script>
         // ⚠️ 新しいデプロイ後のURLにここを書き換えてください
-        const API_URL = "[https://script.google.com/macros/s/AKfycbx16M_ERJ44cW-KMrdA3fYsdQREye735vUALtu5Q_hEpzka3HSRie3l3VtAKC11KJI2PQ/exec]";
+        const API_URL = "https://script.google.com/macros/s/AKfycbx16M_ERJ44cW-KMrdA3fYsdQREye735vUALtu5Q_hEpzka3HSRie3l3VtAKC11KJI2PQ/exec";
         
         let currentPin = "";
         let currentType = "支出";
@@ -463,10 +400,6 @@
         const chartTitle = document.getElementById('chart-title');
         const chartBackBtn = document.getElementById('chart-back-btn');
         const chartTipText = document.getElementById('chart-tip-text');
-
-        const detailModal = document.getElementById('detail-modal');
-        const modalCategoryTitle = document.getElementById('modal-category-title');
-        const modalListBody = document.getElementById('modal-list-body');
 
         function initPeriodSelectors() {
             const now = new Date();
@@ -538,17 +471,20 @@
             updateUI(globalRecords);
         });
 
+        // タップした時に非表示のinput[type="file"]を直接クリックし、OS標準のメニューを表示させます
         receiptArea.addEventListener('click', () => {
             if (receiptStatusText.innerText.includes("解析中") || receiptStatusText.innerText.includes("処理中")) return;
             receiptFile.click();
         });
 
+        // 🖼️ 画像ファイルをブラウザ側で素早くリサイズし、Base64データ化してGASへ直送する処理
         async function processReceiptFile(file) {
             receiptStatusIcon.innerText = "⏳";
             receiptStatusText.innerText = "画像を処理中...";
             receiptArea.style.background = "#f1f5f9";
             
             try {
+                // 画像をブラウザで読み込み
                 const base64Raw = await new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onload = (e) => resolve(e.target.result);
@@ -556,21 +492,27 @@
                     reader.readAsDataURL(file);
                 });
 
+                // Googleサーバーへの送信時間を最速にするため、Canvasで画像を軽量にリサイズ・圧縮します
                 const compressedBase64 = await new Promise((resolve, reject) => {
                     const img = new Image();
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
                         let width = img.width;
                         let height = img.height;
+                        
+                        // GoogleのOCRに最適な幅にリサイズしてデータ量を減らします
                         const MAX_WIDTH = 800;
                         if (width > MAX_WIDTH) {
                             height = Math.round(height * (MAX_WIDTH / width));
                             width = MAX_WIDTH;
                         }
+
                         canvas.width = width;
                         canvas.height = height;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
+
+                        // 画質を少し落としてデータ送信サイズを10分の1以下に圧縮
                         resolve(canvas.toDataURL('image/jpeg', 0.7));
                     };
                     img.onerror = (err) => reject(err);
@@ -578,6 +520,8 @@
                 });
 
                 receiptStatusText.innerText = "Google高速AIがレシートを解析中...";
+
+                // リサイズしたBase64文字列（プレフィックス "data:image/jpeg;base64," を除く純粋なデータ部分）をGASにPOST
                 const base64DataOnly = compressedBase64.split(',')[1];
 
                 const response = await fetch(API_URL, {
@@ -585,22 +529,30 @@
                     body: JSON.stringify({
                         password: currentPin,
                         action: "analyzeReceipt",
-                        imageBlob: base64DataOnly
+                        imageBlob: base64DataOnly // GASの超高速Google OCRへ直接画像を渡す
                     })
                 });
                 
                 const result = await response.json();
                 
                 if (result.status === "success") {
+                    // 金額、店舗名、日付の自動割り当て
                     if (result.amount && result.amount !== "0") amountInput.value = result.amount;
                     if (result.location) locationInput.value = result.location;
-                    notesInput.value = result.notes || "";
+                    
+                    // notes項目が安全に定義されているか確認
+                    if (result.notes) {
+                        notesInput.value = result.notes;
+                    } else {
+                        notesInput.value = "";
+                    }
                     
                     if (result.date) {
                         const formattedDate = result.date.replace(/\//g, '-');
                         dateInput.value = formattedDate;
                     }
                     
+                    // スプレッドシートの設定からAIが判定した最適なカテゴリをマッチングして選択
                     if (result.category) {
                         let exists = false;
                         for (let i = 0; i < categorySelect.options.length; i++) {
@@ -618,21 +570,23 @@
                             categorySelect.value = result.category;
                         }
                     }
+                    
                     alert("✨ 解析大成功！すべての項目を自動入力しました。確認して「記録」を押してください！");
                 } else {
-                    alert("AIによるデータ整理に失敗しました。手入力をお試しください。\nエラー: " + (result.message || ""));
+                    alert("AIによるデータ整理に失敗しました。手入力をお試しください。\nエラー: " + (result.message || "スプレッドシートやAPIの設定を確認してください。"));
                 }
             } catch(err) {
-                alert("通信エラーが発生しました。");
+                alert("通信エラーが発生しました。インターネット環境をお確かめいただくか、GASのウェブアプリURLが正しく公開（全員アクセス可能）になっているかご確認ください。");
                 console.error(err);
             } finally {
                 receiptStatusIcon.innerText = "📸";
                 receiptStatusText.innerText = "レシートを撮影して自動入力";
                 receiptArea.style.background = "#f8fafc";
-                receiptFile.value = ""; 
+                receiptFile.value = ""; // 入力値をリセットして再アップロード可能に
             }
         }
 
+        // OS標準のダイアログからファイルが選ばれた瞬間に起動
         receiptFile.addEventListener('change', (e) => {
             if (e.target.files.length === 0) return;
             processReceiptFile(e.target.files[0]);
@@ -736,57 +690,24 @@
             renderChart();
         }
 
-        function getFilteredRecords() {
+        function renderChart() {
+            const ctx = document.getElementById('myChart').getContext('2d');
             const targetYear = selectYear.value;
             const targetMonth = selectMonth.value;
-            return globalRecords.filter(r => {
+
+            const baseFiltered = globalRecords.filter(r => {
                 if (r.type !== currentType) return false;
                 const parts = r.date.split('/');
                 if (parts.length < 3) return false;
-                return targetMonth === "all" ? parts[0] === targetYear : (parts[0] === targetYear && parts[1] === targetMonth);
+                const rYear = parts[0];
+                const rMonth = parts[1];
+
+                if (targetMonth === "all") {
+                    return rYear === targetYear;
+                } else {
+                    return rYear === targetYear && rMonth === targetMonth;
+                }
             });
-        }
-
-        function openDetailModal(categoryName) {
-            modalCategoryTitle.innerText = `📍 [${categoryName}] 該当データ内訳`;
-            modalListBody.innerHTML = "";
-            
-            const filtered = getFilteredRecords().filter(r => (r.category || "その他") === categoryName);
-            
-            if (filtered.length === 0) {
-                modalListBody.innerHTML = "<p style='color:#999; text-align:center;'>データがありません</p>";
-            } else {
-                filtered.forEach(r => {
-                    const realIndex = globalRecords.indexOf(r);
-                    const div = document.createElement('div');
-                    div.className = "detail-row";
-                    div.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-weight:bold;">
-                            <span>📅 ${r.date}</span>
-                            <span style="color:${r.type === '支出' ? 'var(--expense)' : 'var(--income)'}; font-size:14px;">
-                                ${Number(r.amount).toLocaleString()} 円
-                            </span>
-                        </div>
-                        <div style="margin-bottom:4px;">📍 場所: ${r.location || '未設定'}</div>
-                        <div style="margin-bottom:8px; white-space:pre-wrap; color:#475569; background:#ffffff; padding:6px; border-radius:6px; border:1px solid var(--border);">💬 メモ: ${r.notes || '（なし）'}</div>
-                        <div style="display:flex; justify-content:flex-end; gap:6px;">
-                            <button class="action-btn edit" onclick="closeModal(); startEdit(${realIndex});">✏️ 編集する</button>
-                            <button class="action-btn delete" onclick="closeModal(); deleteRecord(${realIndex});">🗑️ 削除</button>
-                        </div>
-                    `;
-                    modalListBody.appendChild(div);
-                });
-            }
-            detailModal.style.display = "flex";
-        }
-
-        function closeModal() {
-            detailModal.style.display = "none";
-        }
-
-        function renderChart() {
-            const ctx = document.getElementById('myChart').getContext('2d');
-            const baseFiltered = getFilteredRecords();
 
             let labels = [];
             let dataValues = [];
@@ -804,7 +725,7 @@
             } else {
                 const storeTotals = {};
                 baseFiltered.forEach(r => {
-                    if ((r.category || "その他") === drillDownCategory) {
+                    if (r.category === drillDownCategory) {
                         const storeName = r.location ? r.location.trim() : "未登録店舗";
                         storeTotals[storeName] = (storeTotals[storeName] || 0) + Number(r.amount);
                     }
@@ -847,30 +768,18 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     onClick: (event, elements) => {
-                        if (elements.length > 0) {
+                        if (elements.length > 0 && drillDownCategory === null) {
                             const index = elements[0].index;
-                            const clickedLabel = labels[index];
-                            
-                            if (drillDownCategory === null) {
-                                // 第1階層（カテゴリ）タップ時は、画面を切り替えて内訳・メモを表示
-                                openDetailModal(clickedLabel);
-                            } else {
-                                // 第2階層（店舗詳細）にいるときは親カテゴリのモーダルを開く
-                                openDetailModal(drillDownCategory);
-                            }
+                            const clickedCategory = labels[index];
+                            drillDownCategory = clickedCategory;
+                            chartTitle.innerText = `📍 [${clickedCategory}] 店舗別詳細`;
+                            chartBackBtn.style.display = "block"; 
+                            chartTipText.style.display = "none";
+                            renderChart(); 
                         }
                     },
                     plugins: {
-                        legend: { 
-                            position: 'bottom', 
-                            labels: { boxWidth: 12, font: { size: 11 } },
-                            onClick: (e, legendItem, legend) => {
-                                // 凡例をクリックした際にも詳細切り替え画面（モーダル）を開けるように処理
-                                if(legendItem.text !== 'データなし') {
-                                    openDetailModal(drillDownCategory === null ? legendItem.text : drillDownCategory);
-                                }
-                            }
-                        },
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
@@ -918,7 +827,6 @@
                         <div style="margin-top: 4px; display: flex; align-items: center; gap: 4px;">
                             ${metaBadges}
                         </div>
-                        ${r.notes ? `<span class="text-notes">💬 ${r.notes}</span>` : ''}
                         <span style="font-size:10px; color:#aaa; display:block; margin-top:2px;">${r.date}</span>
                     </div> 
                     <div class="item-action-area">
@@ -940,7 +848,7 @@
             const item = globalRecords[index];
             const formattedDate = item.date.replace(/\//g, '-');
             dateInput.value = formattedDate;
-            categorySelect.value = item.category || "その他";
+            categorySelect.value = item.category;
             amountInput.value = item.amount;
             locationInput.value = item.location || '';
             notesInput.value = item.notes || '';
