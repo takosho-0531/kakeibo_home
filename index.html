@@ -140,12 +140,10 @@
             grid-column: span 2;
             padding: 14px 8px;
         }
-        /* 黒字デザイン用クラス */
         .report-box.balance.surplus {
             background: var(--income-bg);
             border-color: #bbf7d0;
         }
-        /* 赤字デザイン用クラス */
         .report-box.balance.deficit {
             background: #fff5f5; 
             border-color: #fecaca; 
@@ -158,7 +156,6 @@
             margin-bottom: 4px;
             white-space: nowrap;
         }
-        /* 黒字・赤字別のタイトル色設定 */
         .report-box.balance.surplus .report-box-title { color: #166534; font-size: 12px; }
         .report-box.balance.deficit .report-box-title { color: #991b1b; font-size: 12px; }
         
@@ -723,12 +720,17 @@
             }
         }
 
+        /* 【修正】グラフスイッチを切り替えた時、下の履歴フィルターも自動連動 */
         chartToggleExpense.addEventListener('click', () => {
             setChartToggleActive("支出");
+            currentFilterType = "支出"; // 履歴フィルターを「支出」に
+            updateFilterButtons();
             drillUp();
         });
         chartToggleIncome.addEventListener('click', () => {
             setChartToggleActive("収入");
+            currentFilterType = "収入"; // 履歴フィルターを「収入」に
+            updateFilterButtons();
             drillUp();
         });
 
@@ -932,14 +934,11 @@
             reportIncome.innerText = `${periodIncome.toLocaleString()}円`;
             reportExpense.innerText = `${periodExpense.toLocaleString()}円`;
 
-            // 【追加修正】収支残高のプラス・マイナス判定による色の動的切り替え
             if (balanceValue >= 0) {
-                // 黒字の場合：surplusクラスを追加、deficitクラスを除去、文字色を緑系に
                 reportBalanceBox.classList.add('surplus');
                 reportBalanceBox.classList.remove('deficit');
                 reportBalance.style.color = "#166534"; 
             } else {
-                // 赤字の場合：deficitクラスを追加、surplusクラスを除去、文字色を赤系に
                 reportBalanceBox.classList.add('deficit');
                 reportBalanceBox.classList.remove('surplus');
                 reportBalance.style.color = "#dc2626"; 
