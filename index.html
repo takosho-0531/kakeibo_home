@@ -10,7 +10,9 @@
             --primary: #4f46e5;
             --primary-hover: #4338ca;
             --expense: #dc2626;
+            --expense-bg: #fef2f2;
             --income: #16a34a;
+            --income-bg: #f0fdf4;
             --bg: #f8fafc;
             --card: #ffffff;
             --text: #1e293b;
@@ -26,7 +28,7 @@
             padding: 12px; 
             display: flex; 
             justify-content: center; 
-            align-items: flex-start; /* スマホでスクロール時に上が切れるのを防ぐ */
+            align-items: flex-start; 
             min-height: 100vh; 
             margin: 0; 
             box-sizing: border-box; 
@@ -35,7 +37,7 @@
 
         body.auth-mode {
             background: var(--auth-grad);
-            align-items: center; /* ログイン画面のみ中央揃え */
+            align-items: center; 
         }
 
         .auth-container { 
@@ -119,6 +121,62 @@
             align-items: center; 
         }
         
+        .report-summary-box {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 12px;
+            margin-bottom: 12px;
+        }
+        .report-box {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 8px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        .report-box.balance {
+            grid-column: span 2;
+            padding: 14px 8px;
+        }
+        /* 黒字デザイン用クラス */
+        .report-box.balance.surplus {
+            background: var(--income-bg);
+            border-color: #bbf7d0;
+        }
+        /* 赤字デザイン用クラス */
+        .report-box.balance.deficit {
+            background: #fff5f5; 
+            border-color: #fecaca; 
+        }
+        
+        .report-box-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-light);
+            margin-bottom: 4px;
+            white-space: nowrap;
+        }
+        /* 黒字・赤字別のタイトル色設定 */
+        .report-box.balance.surplus .report-box-title { color: #166534; font-size: 12px; }
+        .report-box.balance.deficit .report-box-title { color: #991b1b; font-size: 12px; }
+        
+        .report-box.income .report-box-title { color: #166534; }
+        .report-box.expense .report-box-title { color: #991b1b; }
+        .report-box.income { background: var(--income-bg); border-color: #bbf7d0; }
+        .report-box.expense { background: var(--expense-bg); border-color: #fecaca; }
+        
+        .report-box-val {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--text);
+            word-break: break-all;
+        }
+        .report-box.balance .report-box-val {
+            font-size: 20px;
+        }
+
         .form-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
         label { font-size: 12px; color: var(--text-light); margin-bottom: -8px; font-weight: 700; }
         
@@ -132,7 +190,7 @@
             background-color: #ffffff;
             color: var(--text);
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
-            -webkit-appearance: none; /* iOS Safariでの丸みや影をリセット */
+            -webkit-appearance: none; 
         }
         input:focus, select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12); }
         
@@ -174,8 +232,32 @@
 
         .period-selector { display: flex; gap: 4px; align-items: center; }
         .period-select { padding: 6px 8px; font-size: 12px; width: auto; background: #ffffff; border-radius: 8px; }
-        .chart-container { background: #f8fafc; padding: 12px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border); position: relative; }
-        
+
+        .chart-toggle-bar {
+            display: flex;
+            background: #e2e8f0;
+            padding: 2px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        .chart-toggle-btn {
+            flex: 1;
+            padding: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            color: var(--text-light);
+            cursor: pointer;
+        }
+        .chart-toggle-btn.active {
+            background: #ffffff;
+            color: var(--text);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .chart-container { background: #f8fafc; padding: 12px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border); position: relative; margin-top: 12px; }
         .chart-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 12px; font-weight: bold; }
         .chart-back-btn { background: #4f46e5; color: white; border: none; padding: 4px 10px; font-size: 11px; border-radius: 20px; cursor: pointer; width: auto; display: none; }
         .chart-back-btn:hover { background: #3830b9; }
@@ -186,7 +268,29 @@
         button.submit-btn:active { transform: translateY(0); }
         button:disabled { background-color: #ccc; cursor: not-allowed; box-shadow: none; }
         
-        ul { list-style: none; padding: 0; margin: 0; max-height: 320px; overflow-y: auto; }
+        .filter-bar {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        .filter-btn {
+            flex: 1;
+            padding: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            background: #f1f5f9;
+            color: var(--text-light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .filter-btn.active {
+            background: var(--text);
+            color: #ffffff;
+            border-color: var(--text);
+        }
+
+        ul { list-style: none; padding: 0; margin: 0; max-height: 380px; overflow-y: auto; }
         li { 
             background: #ffffff; 
             padding: 12px; 
@@ -258,80 +362,56 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        .text-notes { color: var(--text-light); font-size: 11px; display: block; margin-top: 2px; }
 
-        /* ─── 詳細モーダルウィンドウのスタイル ─── */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
+            background: #ffffff; 
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             z-index: 1000;
             opacity: 0; visibility: hidden;
-            transition: all 0.3s ease;
-            padding: 16px;
+            transition: all 0.25s ease-out;
+            overflow-y: auto; 
             box-sizing: border-box;
         }
-        .modal-overlay.active {
-            opacity: 1; visibility: visible;
-        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
         .modal-content {
-            background: var(--card);
-            width: 100%;
-            max-width: 380px;
-            border-radius: 20px;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-            padding: 24px;
-            box-sizing: border-box;
-            position: relative;
-            animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            background: var(--card); width: 100%; max-width: 440px; min-height: 100vh; padding: 24px 16px; box-sizing: border-box; position: relative; transform: translateY(30px); transition: transform 0.25s ease-out;
         }
-        @keyframes modalIn {
-            from { transform: scale(0.9) translateY(20px); opacity: 0; }
-            to { transform: scale(1) translateY(0); opacity: 1; }
-        }
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            position: relative;
-        }
-        .modal-title { font-size: 18px; font-weight: 800; }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; position: relative; border-bottom: 2px solid var(--border); padding-bottom: 12px; }
+        .modal-title { font-size: 20px; font-weight: 800; }
         
-        /* ⋯ 三点リーダーボタンとメニュー */
         .menu-container { position: relative; }
-        .menu-trigger {
-            background: none; border: none; font-size: 20px; cursor: pointer; padding: 4px 8px; color: var(--text-light); border-radius: 50%; width: auto;
-        }
+        .menu-trigger { background: none; border: none; font-size: 24px; cursor: pointer; padding: 4px 12px; color: var(--text-light); border-radius: 50%; width: auto; }
         .menu-trigger:hover { background: #f1f5f9; color: var(--text); }
-        .dropdown-menu {
-            position: absolute; top: 100%; right: 0; background: white; border: 1px solid var(--border);
-            border-radius: 10px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); width: 100px; display: none; z-index: 1010; overflow: hidden;
-        }
-        .dropdown-menu button {
-            background: none; border: none; border-radius: 0; padding: 10px 14px; font-size: 13px; text-align: left; cursor: pointer; width: 100%; font-weight: 600;
-        }
+        .dropdown-menu { position: absolute; top: 100%; right: 0; background: white; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15); width: 110px; display: none; z-index: 1010; overflow: hidden; }
+        .dropdown-menu button { background: none; border: none; border-radius: 0; padding: 12px 14px; font-size: 14px; text-align: left; cursor: pointer; width: 100%; font-weight: 600; }
         .dropdown-menu button:hover { background: #f8fafc; }
         .dropdown-menu button.menu-edit { color: #2563eb; }
         .dropdown-menu button.menu-delete { color: #dc2626; }
         .dropdown-menu button.menu-copy { color: #16a34a; }
 
-        .modal-body { display: flex; flex-direction: column; gap: 14px; font-size: 14px; }
-        .modal-row { display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; }
+        .modal-body { display: flex; flex-direction: column; gap: 16px; font-size: 15px; }
+        .modal-row { display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
         .modal-row:last-child { border-bottom: none; }
-        .modal-label { font-size: 11px; color: var(--text-light); font-weight: 700; }
-        .modal-value { font-weight: 600; font-size: 15px; }
-        .modal-value.amount { font-size: 20px; font-weight: 800; }
+        .modal-label { font-size: 12px; color: var(--text-light); font-weight: 700; }
+        .modal-value { font-weight: 600; font-size: 16px; color: var(--text); }
+        .modal-value.amount { font-size: 24px; font-weight: 800; }
         
-        .modal-close-btn {
-            margin-top: 10px; background: #f1f5f9; color: var(--text); border: none; font-weight: 700; cursor: pointer;
-        }
-        .modal-close-btn:hover { background: #e2e8f0; }
+        .modal-close-btn { margin-top: 24px; background: #e2e8f0; color: var(--text); border: none; font-weight: 700; cursor: pointer; padding: 14px; }
+        .modal-close-btn:hover { background: #cbd5e1; }
+
+        .modal-edit-form { display: none; flex-direction: column; gap: 14px; background: #f8fafc; padding: 16px; border-radius: 14px; border: 1px solid var(--border); margin-top: 10px; }
+        .modal-edit-form h3 { margin: 0 0 4px 0; font-size: 15px; font-weight: 800; color: #4f46e5; }
+        .modal-edit-form label { font-size: 11px; color: var(--text-light); margin-bottom: -10px; font-weight: 700; }
+        .modal-edit-actions { display: flex; gap: 10px; margin-top: 8px; }
+        .modal-edit-save { background-color: #eab308; color: white; border: none; font-weight: bold; cursor: pointer; }
+        .modal-edit-save:hover { background-color: #ca8a04; }
+        .modal-edit-cancel { background-color: #cbd5e1; color: var(--text); border: none; font-weight: bold; cursor: pointer; }
+        .modal-edit-cancel:hover { background-color: #94a3b8; }
     </style>
 </head>
 <body class="auth-mode">
@@ -353,8 +433,8 @@
         <h1>📝 家計簿</h1>
         
         <div class="type-selector">
-            <button type="button" id="btn-expense" class="type-btn active-ex">支出</button>
-            <button type="button" id="btn-income" class="type-btn">収入</button>
+            <button type="button" id="btn-expense" class="type-btn active-ex">支出を記録</button>
+            <button type="button" id="btn-income" class="type-btn">収入を記録</button>
         </div>
 
         <div id="receipt-area" class="receipt-zone">
@@ -377,7 +457,7 @@
             <input type="text" id="location" placeholder="場所（例: スーパー、Amazon）">
 
             <label for="notes">💬 メモ</label>
-            <input type="text" id="notes" placeholder="メモ・備考（自由入力）">
+            <textarea id="notes" placeholder="メモ・備考（自由入力・改行可）" rows="3" style="width: 100%; padding: 12px 14px; font-size: 15px; border: 1px solid var(--border); border-radius: 10px; box-sizing: border-box; background-color: #ffffff; color: var(--text); font-family: inherit; resize: vertical; transition: all 0.2s;"></textarea>
 
             <button id="add-btn" class="submit-btn">データを同期して記録</button>
         </div>
@@ -395,7 +475,27 @@
                 </select>
             </div>
         </h2>
+
+        <div class="report-summary-box">
+            <div id="report-balance-box" class="report-box balance">
+                <div class="report-box-title" id="report-balance-label">⚖️ 〇月の収支残高</div>
+                <div class="report-box-val" id="report-balance">0円</div>
+            </div>
+            <div class="report-box income">
+                <div class="report-box-title" id="report-income-label">🟢 〇月の収入</div>
+                <div class="report-box-val" id="report-income">0円</div>
+            </div>
+            <div class="report-box expense">
+                <div class="report-box-title" id="report-expense-label">🔴 〇月の支出</div>
+                <div class="report-box-val" id="report-expense">0円</div>
+            </div>
+        </div>
+
         <div class="chart-container">
+            <div class="chart-toggle-bar">
+                <button type="button" id="chart-toggle-expense" class="chart-toggle-btn active">支出分析</button>
+                <button type="button" id="chart-toggle-income" class="chart-toggle-btn">収入分析</button>
+            </div>
             <div class="chart-nav">
                 <span id="chart-title">カテゴリー別分析</span>
                 <button id="chart-back-btn" class="chart-back-btn" onclick="drillUp()">👈 全体に戻る</button>
@@ -407,6 +507,12 @@
         </div>
 
         <h2>履歴一覧</h2>
+        <div class="filter-bar">
+            <button type="button" id="filter-all" class="filter-btn active">🔄 すべて</button>
+            <button type="button" id="filter-expense" class="filter-btn">🔴 支出のみ</button>
+            <button type="button" id="filter-income" class="filter-btn">🟢 収入のみ</button>
+        </div>
+
         <div id="loading-status" class="loading">データを最新に同期中...</div>
         <ul id="history-list"></ul>
     </div>
@@ -424,7 +530,8 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-body">
+            
+            <div id="modal-view-area" class="modal-body">
                 <div class="modal-row">
                     <span class="modal-label">種別 / カテゴリー</span>
                     <span id="modal-category" class="modal-value">--</span>
@@ -446,6 +553,24 @@
                     <span id="modal-notes" class="modal-value" style="white-space: pre-wrap;">--</span>
                 </div>
             </div>
+
+            <div id="modal-edit-area" class="modal-edit-form">
+                <h3>✏️ データを編集</h3>
+                <label for="modal-input-date">📅 日付</label>
+                <input type="date" id="modal-input-date">
+                <label for="modal-input-category">🗂️ 項目</label>
+                <select id="modal-input-category"></select>
+                <label for="modal-input-amount">💰 金額</label>
+                <input type="number" id="modal-input-amount" placeholder="金額 (円)" inputmode="numeric">
+                <label for="modal-input-location">📍 場所</label>
+                <input type="text" id="modal-input-location" placeholder="場所（例: スーパー、Amazon）">
+                <label for="modal-input-notes">💬 メモ</label>
+                <textarea id="modal-input-notes" placeholder="メモ・備考（自由入力・改行可）" rows="3" style="width: 100%; padding: 12px 14px; font-size: 15px; border: 1px solid var(--border); border-radius: 10px; box-sizing: border-box; background-color: #ffffff; color: var(--text); font-family: inherit; resize: vertical; transition: all 0.2s;"></textarea>
+                <div class="modal-edit-actions">
+                    <button id="modal-edit-save-btn" class="modal-edit-save">保存する</button>
+                    <button id="modal-edit-cancel-btn" class="modal-edit-cancel">キャンセル</button>
+                </div>
+            </div>
             <button id="modal-close-btn" class="modal-close-btn">閉じる</button>
         </div>
     </div>
@@ -454,7 +579,9 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbx16M_ERJ44cW-KMrdA3fYsdQREye735vUALtu5Q_hEpzka3HSRie3l3VtAKC11KJI2PQ/exec";
         
         let currentPin = "";
-        let currentType = "支出";
+        let currentType = "支出"; 
+        let currentChartType = "支出"; 
+        let currentFilterType = "すべて"; 
         let serverCategories = { "支出": [], "収入": [] }; 
         let globalRecords = [];
         let myChart = null;
@@ -490,8 +617,22 @@
         const chartTitle = document.getElementById('chart-title');
         const chartBackBtn = document.getElementById('chart-back-btn');
         const chartTipText = document.getElementById('chart-tip-text');
+        
+        const chartToggleExpense = document.getElementById('chart-toggle-expense');
+        const chartToggleIncome = document.getElementById('chart-toggle-income');
 
-        // モーダル関連の要素
+        const filterAll = document.getElementById('filter-all');
+        const filterExpense = document.getElementById('filter-expense');
+        const filterIncome = document.getElementById('filter-income');
+
+        const reportBalanceBox = document.getElementById('report-balance-box');
+        const reportBalanceLabel = document.getElementById('report-balance-label');
+        const reportIncomeLabel = document.getElementById('report-income-label');
+        const reportExpenseLabel = document.getElementById('report-expense-label');
+        const reportBalance = document.getElementById('report-balance');
+        const reportIncome = document.getElementById('report-income');
+        const reportExpense = document.getElementById('report-expense');
+
         const detailModal = document.getElementById('detail-modal');
         const menuTriggerBtn = document.getElementById('menu-trigger-btn');
         const dropdownMenu = document.getElementById('dropdown-menu');
@@ -499,6 +640,16 @@
         const modalEditBtn = document.getElementById('modal-edit-btn');
         const modalCopyBtn = document.getElementById('modal-copy-btn');
         const modalDeleteBtn = document.getElementById('modal-delete-btn');
+
+        const modalViewArea = document.getElementById('modal-view-area');
+        const modalEditArea = document.getElementById('modal-edit-area');
+        const modalInputDate = document.getElementById('modal-input-date');
+        const modalInputCategory = document.getElementById('modal-input-category');
+        const modalInputAmount = document.getElementById('modal-input-amount');
+        const modalInputLocation = document.getElementById('modal-input-location');
+        const modalInputNotes = document.getElementById('modal-input-notes');
+        const modalEditSaveBtn = document.getElementById('modal-edit-save-btn');
+        const modalEditCancelBtn = document.getElementById('modal-edit-cancel-btn');
 
         function initPeriodSelectors() {
             const now = new Date();
@@ -524,28 +675,23 @@
         }
         setTodayDate();
 
-        function updateCategoryOptions() {
-            categorySelect.innerHTML = "";
+        function updateCategoryOptions(selectElement = categorySelect) {
+            selectElement.innerHTML = "";
             const list = (serverCategories && serverCategories[currentType]) ? serverCategories[currentType] : [];
-            
             if(list.length === 0) {
                 const opt = document.createElement('option');
-                opt.value = "その他";
-                opt.innerText = "other";
-                categorySelect.appendChild(opt);
+                opt.value = "その他"; opt.innerText = "その他";
+                selectElement.appendChild(opt);
                 return;
             }
-
             list.forEach(cat => {
                 if(cat) {
                     const opt = document.createElement('option');
-                    opt.value = cat;
-                    opt.innerText = cat;
-                    categorySelect.appendChild(opt);
+                    opt.value = cat; opt.innerText = cat;
+                    selectElement.appendChild(opt);
                 }
             });
         }
-
         updateCategoryOptions();
 
         btnExpense.addEventListener('click', () => {
@@ -555,8 +701,6 @@
             receiptArea.style.display = "block";
             updateCategoryOptions();
             cancelEdit(); 
-            drillUp(); 
-            updateUI(globalRecords);
         });
 
         btnIncome.addEventListener('click', () => {
@@ -566,9 +710,54 @@
             receiptArea.style.display = "none";
             updateCategoryOptions();
             cancelEdit(); 
-            drillUp(); 
-            updateUI(globalRecords);
         });
+
+        function setChartToggleActive(type) {
+            currentChartType = type;
+            if (type === "支出") {
+                chartToggleExpense.classList.add('active');
+                chartToggleIncome.classList.remove('active');
+            } else {
+                chartToggleIncome.classList.add('active');
+                chartToggleExpense.classList.remove('active');
+            }
+        }
+
+        chartToggleExpense.addEventListener('click', () => {
+            setChartToggleActive("支出");
+            drillUp();
+        });
+        chartToggleIncome.addEventListener('click', () => {
+            setChartToggleActive("収入");
+            drillUp();
+        });
+
+        filterAll.addEventListener('click', () => { 
+            currentFilterType = "すべて"; 
+            updateFilterButtons(); 
+            updateUI(globalRecords); 
+        });
+        filterExpense.addEventListener('click', () => { 
+            currentFilterType = "支出"; 
+            setChartToggleActive("支出"); 
+            drillDownCategory = null;     
+            updateFilterButtons(); 
+            updateUI(globalRecords); 
+        });
+        filterIncome.addEventListener('click', () => { 
+            currentFilterType = "収入"; 
+            setChartToggleActive("収入"); 
+            drillDownCategory = null;     
+            updateFilterButtons(); 
+            updateUI(globalRecords); 
+        });
+
+        function updateFilterButtons() {
+            filterAll.classList.remove('active'); filterExpense.classList.remove('active'); filterIncome.classList.remove('active');
+            if (currentFilterType === "すべて") filterAll.classList.add('active');
+            if (currentFilterType === "支出") filterExpense.classList.add('active');
+            if (currentFilterType === "収入") filterIncome.classList.add('active');
+        }
 
         receiptArea.addEventListener('click', () => {
             if (receiptStatusText.innerText.includes("解析中") || receiptStatusText.innerText.includes("処理中")) return;
@@ -579,7 +768,6 @@
             receiptStatusIcon.innerText = "⏳";
             receiptStatusText.innerText = "画像を処理中...";
             receiptArea.style.background = "#f1f5f9";
-            
             try {
                 const base64Raw = await new Promise((resolve, reject) => {
                     const reader = new FileReader();
@@ -587,20 +775,14 @@
                     reader.onerror = (err) => reject(err);
                     reader.readAsDataURL(file);
                 });
-
                 const compressedBase64 = await new Promise((resolve, reject) => {
                     const img = new Image();
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        let width = img.width;
-                        let height = img.height;
+                        let width = img.width; let height = img.height;
                         const MAX_WIDTH = 800;
-                        if (width > MAX_WIDTH) {
-                            height = Math.round(height * (MAX_WIDTH / width));
-                            width = MAX_WIDTH;
-                        }
-                        canvas.width = width;
-                        canvas.height = height;
+                        if (width > MAX_WIDTH) { height = Math.round(height * (MAX_WIDTH / width)); width = MAX_WIDTH; }
+                        canvas.width = width; canvas.height = height;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
                         resolve(canvas.toDataURL('image/jpeg', 0.7));
@@ -608,59 +790,37 @@
                     img.onerror = (err) => reject(err);
                     img.src = base64Raw;
                 });
-
                 receiptStatusText.innerText = "Google高速AIがレシートを解析中...";
                 const base64DataOnly = compressedBase64.split(',')[1];
-
                 const response = await fetch(API_URL, {
                     method: "POST",
-                    body: JSON.stringify({
-                        password: currentPin,
-                        action: "analyzeReceipt",
-                        imageBlob: base64DataOnly
-                    })
+                    body: JSON.stringify({ password: currentPin, action: "analyzeReceipt", imageBlob: base64DataOnly })
                 });
-                
                 const result = await response.json();
-                
                 if (result.status === "success") {
                     if (result.amount && result.amount !== "0") amountInput.value = result.amount;
                     if (result.location) locationInput.value = result.location;
-                    if (result.notes) { notesInput.value = result.notes; } else { notesInput.value = ""; }
-                    if (result.date) {
-                        const formattedDate = result.date.replace(/\//g, '-');
-                        dateInput.value = formattedDate;
-                    }
-                    
+                    notesInput.value = result.notes || "";
+                    if (result.date) dateInput.value = result.date.replace(/\//g, '-');
                     if (result.category) {
                         let exists = false;
                         for (let i = 0; i < categorySelect.options.length; i++) {
-                            if (categorySelect.options[i].value === result.category) {
-                                categorySelect.value = result.category;
-                                exists = true;
-                                break;
-                            }
+                            if (categorySelect.options[i].value === result.category) { categorySelect.value = result.category; exists = true; break; }
                         }
                         if (!exists && categorySelect.options.length > 0) {
-                            const opt = document.createElement('option');
-                            opt.value = result.category;
-                            opt.innerText = result.category;
-                            categorySelect.appendChild(opt);
-                            categorySelect.value = result.category;
+                            const opt = document.createElement('option'); opt.value = result.category; opt.innerText = result.category;
+                            categorySelect.appendChild(opt); categorySelect.value = result.category;
                         }
                     }
                     alert("✨ 解析大成功！すべての項目を自動入力しました。確認して「記録」を押してください！");
                 } else {
-                    alert("AIによるデータ整理に失敗しました。手入力をお試しください。\nエラー: " + (result.message || "設定を確認してください。"));
+                    alert("AIによるデータ整理に失敗しました。手入力をお試しください。");
                 }
             } catch(err) {
-                alert("通信エラーが発生しました。インターネット環境をお確かめください。");
-                console.error(err);
+                alert("通信エラーが発生しました。");
             } finally {
-                receiptStatusIcon.innerText = "📸";
-                receiptStatusText.innerText = "レシートを撮影して自動入力";
-                receiptArea.style.background = "#f8fafc";
-                receiptFile.value = "";
+                receiptStatusIcon.innerText = "📸"; receiptStatusText.innerText = "レシートを撮影して自動入力";
+                receiptArea.style.background = "#f8fafc"; receiptFile.value = "";
             }
         }
 
@@ -669,30 +829,23 @@
             processReceiptFile(e.target.files[0]);
         });
 
-        selectYear.addEventListener('change', () => renderChart());
-        selectMonth.addEventListener('change', () => renderChart());
+        selectYear.addEventListener('change', () => { updateUI(globalRecords); });
+        selectMonth.addEventListener('change', () => { updateUI(globalRecords); });
 
         loginBtn.addEventListener('click', async () => {
             const pin = pinInput.value;
             if (!pin) return;
-            
             authError.innerText = "セキュリティ検証中...";
             loginBtn.disabled = true;
-
             try {
                 const response = await fetch(`${API_URL}?password=${pin}`);
                 const result = await response.json();
-                
                 if (result.status === "success") {
                     currentPin = pin;
                     if (result.categories) serverCategories = result.categories;
-                    
                     authBox.style.display = "none";
                     appBox.style.display = "block";
-                    document.body.style.alignItems = "flex-start";
-                    document.body.style.paddingTop = "20px";
                     document.body.classList.remove('auth-mode');
-                    
                     updateCategoryOptions();
                     globalRecords = result.records || [];
                     updateUI(globalRecords);
@@ -701,17 +854,12 @@
                     loginBtn.disabled = false;
                 }
             } catch (e) {
-                authError.innerText = "接続エラー。URLが正しいか確認してください。";
+                authError.innerText = "接続エラー。";
                 loginBtn.disabled = false;
             }
         });
 
-        pinInput.addEventListener('keydown', (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault(); 
-                loginBtn.click();
-            }
-        });
+        pinInput.addEventListener('keydown', (e) => { if (e.key === "Enter") { e.preventDefault(); loginBtn.click(); } });
 
         async function fetchLatestData() {
             loadingStatus.style.display = "block";
@@ -724,46 +872,29 @@
                     globalRecords = result.records || [];
                     updateUI(globalRecords);
                 }
-            } catch (e) {
-                console.error(e);
-            }
+            } catch (e) { console.error(e); }
             loadingStatus.style.display = "none";
         }
 
         function getCategoryHue(categoryName) {
             let hash = 0;
-            for (let i = 0; i < categoryName.length; i++) {
-                hash = categoryName.charCodeAt(i) + ((hash << 5) - hash);
-            }
+            for (let i = 0; i < categoryName.length; i++) { hash = categoryName.charCodeAt(i) + ((hash << 5) - hash); }
             return Math.abs(hash) % 360;
         }
 
-        function generateCategoryColors(categories) {
-            return categories.map(cat => {
-                const hue = getCategoryHue(cat);
-                return `hsl(${hue}, 65%, 55%)`; 
-            });
-        }
+        function generateCategoryColors(categories) { return categories.map(cat => `hsl(${getCategoryHue(cat)}, 65%, 55%)`); }
 
         function generateGradientColors(baseCategory, count) {
-            const baseHue = getCategoryHue(baseCategory);
-            const colors = [];
-            const minL = 38;
-            const maxL = 72;
+            const baseHue = getCategoryHue(baseCategory); const colors = []; const minL = 38; const maxL = 72;
             const step = count > 1 ? (maxL - minL) / (count - 1) : 0;
-
-            for (let i = 0; i < count; i++) {
-                const l = Math.floor(minL + (step * i));
-                colors.push(`hsl(${baseHue}, 60%, ${l}%)`);
-            }
+            for (let i = 0; i < count; i++) { colors.push(`hsl(${baseHue}, 60%, ${Math.floor(minL + (step * i))}%)`); }
             return colors;
         }
 
         function drillUp() {
             drillDownCategory = null;
-            chartTitle.innerText = "カテゴリー別分析";
-            chartBackBtn.style.display = "none";
-            chartTipText.style.display = "block";
+            chartTitle.innerText = `${currentChartType}のカテゴリー別分析`;
+            chartBackBtn.style.display = "none"; chartTipText.style.display = "block";
             renderChart();
         }
 
@@ -772,98 +903,97 @@
             const targetYear = selectYear.value;
             const targetMonth = selectMonth.value;
 
-            const baseFiltered = globalRecords.filter(r => {
-                if (r.type !== currentType) return false;
+            let reportLabel = "";
+            if (targetMonth === "all") {
+                reportLabel = `${targetYear.slice(-2)}年`;
+            } else {
+                reportLabel = `${Number(targetMonth)}月`;
+            }
+            reportBalanceLabel.innerText = `⚖️ ${reportLabel}の収支残高`;
+            reportIncomeLabel.innerText = `🟢 ${reportLabel}の収入`;
+            reportExpenseLabel.innerText = `🔴 ${reportLabel}の支出`;
+
+            const periodFiltered = globalRecords.filter(r => {
                 const parts = r.date.split('/');
                 if (parts.length < 3) return false;
-                const rYear = parts[0];
-                const rMonth = parts[1];
-
-                if (targetMonth === "all") {
-                    return rYear === targetYear;
-                } else {
-                    return rYear === targetYear && rMonth === targetMonth;
-                }
+                return targetMonth === "all" ? (parts[0] === targetYear) : (parts[0] === targetYear && parts[1] === targetMonth);
             });
 
-            let labels = [];
-            let dataValues = [];
-            let chartColors = [];
+            let periodIncome = 0;
+            let periodExpense = 0;
+            periodFiltered.forEach(r => {
+                const amt = Number(r.amount) || 0;
+                if (r.type === "収入") periodIncome += amt;
+                if (r.type === "支出") periodExpense += amt;
+            });
+
+            const balanceValue = periodIncome - periodExpense;
+            reportBalance.innerText = `${balanceValue.toLocaleString()}円`;
+            reportIncome.innerText = `${periodIncome.toLocaleString()}円`;
+            reportExpense.innerText = `${periodExpense.toLocaleString()}円`;
+
+            // 【追加修正】収支残高のプラス・マイナス判定による色の動的切り替え
+            if (balanceValue >= 0) {
+                // 黒字の場合：surplusクラスを追加、deficitクラスを除去、文字色を緑系に
+                reportBalanceBox.classList.add('surplus');
+                reportBalanceBox.classList.remove('deficit');
+                reportBalance.style.color = "#166534"; 
+            } else {
+                // 赤字の場合：deficitクラスを追加、surplusクラスを除去、文字色を赤系に
+                reportBalanceBox.classList.add('deficit');
+                reportBalanceBox.classList.remove('surplus');
+                reportBalance.style.color = "#dc2626"; 
+            }
+
+            if (drillDownCategory === null) {
+                chartTitle.innerText = `${currentChartType}のカテゴリー別分析`;
+            }
+
+            const chartFiltered = periodFiltered.filter(r => r.type === currentChartType);
+            let labels = []; let dataValues = []; let chartColors = [];
 
             if (drillDownCategory === null) {
                 const totals = {};
-                baseFiltered.forEach(r => {
-                    const cat = r.category || "その他";
-                    totals[cat] = (totals[cat] || 0) + Number(r.amount);
-                });
-                labels = Object.keys(totals);
-                dataValues = Object.values(totals);
-                chartColors = generateCategoryColors(labels);
+                chartFiltered.forEach(r => { const cat = r.category || "その他"; totals[cat] = (totals[cat] || 0) + Number(r.amount); });
+                labels = Object.keys(totals); dataValues = Object.values(totals); chartColors = generateCategoryColors(labels);
             } else {
                 const storeTotals = {};
-                baseFiltered.forEach(r => {
+                chartFiltered.forEach(r => {
                     if (r.category === drillDownCategory) {
-                        const storeName = r.location ? r.location.trim() : "未登録店舗";
-                        storeTotals[storeName] = (storeTotals[storeName] || 0) + Number(r.amount);
+                        const storeName = r.location ? r.location.trim() : "未登録店舗"; storeTotals[storeName] = (storeTotals[storeName] || 0) + Number(r.amount);
                     }
                 });
-                labels = Object.keys(storeTotals);
-                dataValues = Object.values(storeTotals);
-                chartColors = generateGradientColors(drillDownCategory, labels.length);
+                labels = Object.keys(storeTotals); dataValues = Object.values(storeTotals); chartColors = generateGradientColors(drillDownCategory, labels.length);
             }
 
-            if (myChart) {
-                myChart.destroy();
-            }
+            if (myChart) { myChart.destroy(); }
 
             if (labels.length === 0) {
                 myChart = new Chart(ctx, {
                     type: 'doughnut',
-                    data: {
-                        labels: ['データなし'],
-                        datasets: [{ data: [1], backgroundColor: ['#e2e8f0'] }]
-                    },
-                    options: { 
-                        responsive: true, 
-                        maintainAspectRatio: false,
-                        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } } 
-                    }
+                    data: { labels: ['データなし'], datasets: [{ data: [1], backgroundColor: ['#e2e8f0'] }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } } }
                 });
                 return;
             }
 
             myChart = new Chart(ctx, {
                 type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: dataValues,
-                        backgroundColor: chartColors
-                    }]
-                },
+                data: { labels: labels, datasets: [{ data: dataValues, backgroundColor: chartColors }] },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     onClick: (event, elements) => {
                         if (elements.length > 0 && drillDownCategory === null) {
-                            const index = elements[0].index;
-                            const clickedCategory = labels[index];
+                            const index = elements[0].index; const clickedCategory = labels[index];
                             drillDownCategory = clickedCategory;
                             chartTitle.innerText = `📍 [${clickedCategory}] 店舗別詳細`;
-                            chartBackBtn.style.display = "block"; 
-                            chartTipText.style.display = "none";
+                            chartBackBtn.style.display = "block"; chartTipText.style.display = "none";
                             renderChart(); 
                         }
                     },
                     plugins: {
                         legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return ` ${context.label}: ${Number(context.raw).toLocaleString()} 円`;
-                                }
-                            }
-                        }
+                        tooltip: { callbacks: { label: function(context) { return ` ${context.label}: ${Number(context.raw).toLocaleString()} 円`; } } }
                     }
                 }
             });
@@ -871,29 +1001,35 @@
 
         function updateUI(records) {
             historyList.innerHTML = '';
-            renderChart();
+            renderChart(); 
+            
             if(!records || records.length === 0) {
                 historyList.innerHTML = '<li style="color:#999; justify-content:center;">データがまだありません</li>';
                 return;
             }
-            const filteredRecords = records.filter(r => r.type === currentType);
-            if(filteredRecords.length === 0) {
-                historyList.innerHTML = `<li style="color:#999; justify-content:center;">${currentType}のデータはまだありません</li>`;
-                return;
-            }
-            filteredRecords.forEach(r => {
+
+            const targetYear = selectYear.value;
+            const targetMonth = selectMonth.value;
+
+            let filtered = records.filter(r => {
+                const parts = r.date.split('/');
+                if (parts.length < 3) return false;
+                return targetMonth === "all" ? (parts[0] === targetYear) : (parts[0] === targetYear && parts[1] === targetMonth);
+            });
+
+            if (currentFilterType !== "すべて") { filtered = filtered.filter(r => r.type === currentFilterType); }
+            if(filtered.length === 0) { historyList.innerHTML = `<li style="color:#999; justify-content:center;">条件に一致するデータはありません</li>`; return; }
+
+            filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            filtered.forEach(r => {
                 const li = document.createElement('li');
                 li.className = r.type === "支出" ? "ex-item" : "in-item";
-                
-                let metaBadges = "";
-                if (r.location) {
-                    metaBadges += `<span class="badge-loc" title="${r.location}">📍 ${r.location}</span>`;
-                }
-                
+                let metaBadges = r.location ? `<span class="badge-loc" title="${r.location}">📍 ${r.location}</span>` : "";
                 const prefix = r.type === "支出" ? "-" : "+";
                 const priceColor = r.type === "支出" ? "var(--expense)" : "var(--income)";
                 const badgeClass = r.type === "支出" ? "ex" : "in";
-                const realIndex = globalRecords.indexOf(r);
+                const realIndex = globalRecords.indexOf(r); 
                 
                 li.innerHTML = `
                     <div class="item-main">
@@ -901,9 +1037,7 @@
                             <span class="badge-type ${badgeClass}">[${r.type}]</span>
                             <span class="item-title">${r.category || 'その他'}</span>
                         </div>
-                        <div style="margin-top: 4px; display: flex; align-items: center; gap: 4px;">
-                            ${metaBadges}
-                        </div>
+                        <div style="margin-top: 4px; display: flex; align-items: center; gap: 4px;">${metaBadges}</div>
                         <span style="font-size:10px; color:#aaa; display:block; margin-top:2px;">${r.date}</span>
                     </div> 
                     <div class="item-action-area">
@@ -912,135 +1046,92 @@
                         </span>
                     </div>
                 `;
-
-                li.addEventListener('click', () => {
-                    openDetailModal(realIndex);
-                });
-
+                li.addEventListener('click', () => openDetailModal(realIndex));
                 historyList.appendChild(li);
             });
         }
 
-        // ─── モーダル制御ロジック ───
         function openDetailModal(index) {
-            selectedRecordIndex = index;
-            const record = globalRecords[index];
-            
+            selectedRecordIndex = index; const record = globalRecords[index];
             document.getElementById('modal-category').innerText = `[${record.type}] ${record.category || 'その他'}`;
-            
-            const prefix = record.type === "支出" ? "-" : "+";
-            const color = record.type === "支出" ? "var(--expense)" : "var(--income)";
+            const prefix = record.type === "支出" ? "-" : "+"; const color = record.type === "支出" ? "var(--expense)" : "var(--income)";
             const amountEl = document.getElementById('modal-amount');
-            amountEl.innerText = `${prefix}${Number(record.amount).toLocaleString()} 円`;
-            amountEl.style.color = color;
-
+            amountEl.innerText = `${prefix}${Number(record.amount).toLocaleString()} 円`; amountEl.style.color = color;
             document.getElementById('modal-date').innerText = record.date;
             document.getElementById('modal-location').innerText = record.location || '未登録';
             document.getElementById('modal-notes').innerText = record.notes || 'なし';
 
-            dropdownMenu.style.display = "none";
-            detailModal.classList.add('active');
+            modalViewArea.style.display = "flex"; modalEditArea.style.display = "none";
+            menuTriggerBtn.style.display = "block"; dropdownMenu.style.display = "none";
+            detailModal.classList.add('active'); document.body.style.overflow = "hidden"; 
         }
 
         function closeDetailModal() {
-            detailModal.classList.remove('active');
-            dropdownMenu.style.display = "none";
-            selectedRecordIndex = null;
+            detailModal.classList.remove('active'); dropdownMenu.style.display = "none";
+            selectedRecordIndex = null; editingIndex = null; document.body.style.overflow = ""; 
         }
 
-        menuTriggerBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const isDisplayed = dropdownMenu.style.display === "block";
-            dropdownMenu.style.display = isDisplayed ? "none" : "block";
-        });
-
+        menuTriggerBtn.addEventListener('click', (e) => { e.stopPropagation(); const isDisplayed = dropdownMenu.style.display === "block"; dropdownMenu.style.display = isDisplayed ? "none" : "block"; });
         modalCloseBtn.addEventListener('click', closeDetailModal);
-        detailModal.addEventListener('click', (e) => {
-            if (e.target === detailModal) closeDetailModal();
-        });
-        document.addEventListener('click', () => {
-            dropdownMenu.style.display = "none";
-        });
+        document.addEventListener('click', () => dropdownMenu.style.display = "none");
 
-        // モーダル内の「編集」
         modalEditBtn.addEventListener('click', () => {
             if (selectedRecordIndex !== null) {
-                const idx = selectedRecordIndex;
-                closeDetailModal();
-                startEdit(idx);
+                editingIndex = selectedRecordIndex; const item = globalRecords[editingIndex];
+                const savedType = currentType; currentType = item.type; updateCategoryOptions(modalInputCategory); currentType = savedType;
+                modalInputDate.value = item.date.replace(/\//g, '-');
+                modalInputCategory.value = item.category; modalInputAmount.value = item.amount;
+                modalInputLocation.value = item.location || ''; modalInputNotes.value = item.notes || '';
+                modalViewArea.style.display = "none"; modalEditArea.style.display = "flex";
+                menuTriggerBtn.style.display = "none"; dropdownMenu.style.display = "none";
             }
         });
 
-        // モーダル内の「削除」
-        modalDeleteBtn.addEventListener('click', async () => {
-            if (selectedRecordIndex !== null) {
-                const idx = selectedRecordIndex;
-                closeDetailModal();
-                await deleteRecord(idx);
-            }
+        modalEditCancelBtn.addEventListener('click', () => { if (selectedRecordIndex !== null) openDetailModal(selectedRecordIndex); });
+
+        modalEditSaveBtn.addEventListener('click', async () => {
+            const amount = modalInputAmount.value; const category = modalInputCategory.value; const location = modalInputLocation.value; const notes = modalInputNotes.value;
+            const selectedDate = modalInputDate.value.replace(/-/g, '/');
+            if (!amount || !selectedDate) return alert('入力内容を確認してください');
+            modalEditSaveBtn.disabled = true; modalEditSaveBtn.innerText = "暗号化同期中...";
+            const item = globalRecords[editingIndex];
+            const payload = {
+                password: currentPin, type: item.type, category: category, amount: amount, location: location, notes: notes, customDate: selectedDate, action: "editRecord",
+                oldDate: item.date, oldCategory: item.category, oldAmount: item.amount, oldLocation: item.location, oldNotes: item.notes
+            };
+            try {
+                const response = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
+                const result = await response.json();
+                if (result.status === "success") {
+                    loadingStatus.style.display = "block";
+                    const freshResponse = await fetch(`${API_URL}?password=${currentPin}`);
+                    const freshResult = await freshResponse.json();
+                    if (freshResult.status === "success") {
+                        globalRecords = freshResult.records || []; updateUI(globalRecords);
+                        const newIdx = globalRecords.findIndex(r => r.type === payload.type && r.date === payload.customDate && r.category === payload.category && r.amount === payload.amount && r.location === payload.location && r.notes === payload.notes);
+                        if (newIdx !== -1) openDetailModal(newIdx); else closeDetailModal();
+                    } else { closeDetailModal(); }
+                    loadingStatus.style.display = "none";
+                } else { alert(result.message); }
+            } catch (e) { alert("送信エラー"); }
+            modalEditSaveBtn.disabled = false; modalEditSaveBtn.innerText = "保存する";
         });
 
-        // モーダル内の「複製」
+        modalDeleteBtn.addEventListener('click', async () => { if (selectedRecordIndex !== null) { const idx = selectedRecordIndex; closeDetailModal(); await deleteRecord(idx); } });
+
         modalCopyBtn.addEventListener('click', () => {
             if (selectedRecordIndex !== null) {
-                const item = globalRecords[selectedRecordIndex];
-                closeDetailModal();
-
-                // 編集モードを一旦クリアして新規作成状態にする
-                cancelEdit();
-
-                // 選択されているタイプ（支出/収入）を合わせてUI更新
-                if (item.type !== currentType) {
-                    if (item.type === "支出") {
-                        btnExpense.click();
-                    } else {
-                        btnIncome.click();
-                    }
-                }
-
-                // 日付は「今日」
-                setTodayDate();
-                
-                // 【変更点】金額はクリア（空っぽ）にする
-                amountInput.value = '';
-
-                // その他（項目・店舗・メモ）を引き継ぐ
-                categorySelect.value = item.category;
-                locationInput.value = item.location || '';
-                notesInput.value = item.notes || '';
-
-                // フォームへスクロール
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                
-                // 入力欄にフォーカスを当てる
-                amountInput.focus();
-                
-                alert("📋 データを複製しました（金額は新しく入力してください）。内容を確認して記録ボタンを押してください。");
+                const item = globalRecords[selectedRecordIndex]; closeDetailModal(); cancelEdit();
+                if (item.type !== currentType) { if (item.type === "支出") btnExpense.click(); else btnIncome.click(); }
+                setTodayDate(); amountInput.value = ''; categorySelect.value = item.category; locationInput.value = item.location || ''; notesInput.value = item.notes || '';
+                window.scrollTo({ top: 0, behavior: 'smooth' }); amountInput.focus();
+                alert("📋 データを複製しました（金額は新しく入力してください）。");
             }
         });
 
-        function startEdit(index) {
-            editingIndex = index;
-            const item = globalRecords[index];
-            const formattedDate = item.date.replace(/\//g, '-');
-            dateInput.value = formattedDate;
-            categorySelect.value = item.category;
-            amountInput.value = item.amount;
-            locationInput.value = item.location || '';
-            notesInput.value = item.notes || '';
-            addBtn.innerText = "変更を同期して保存";
-            addBtn.style.backgroundColor = "#eab308"; 
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
         function cancelEdit() {
-            editingIndex = null;
-            addBtn.innerText = "データを同期して記録";
-            addBtn.style.backgroundColor = "var(--primary)";
-            amountInput.value = '';
-            locationInput.value = '';
-            notesInput.value = '';
-            setTodayDate();
+            editingIndex = null; addBtn.innerText = "データを同期して記録"; addBtn.style.backgroundColor = "var(--primary)";
+            amountInput.value = ''; locationInput.value = ''; notesInput.value = ''; setTodayDate();
         }
 
         async function deleteRecord(index) {
@@ -1050,63 +1141,24 @@
             try {
                 const response = await fetch(API_URL, {
                     method: "POST",
-                    body: JSON.stringify({
-                        password: currentPin,
-                        action: "deleteRecord",
-                        type: item.type,
-                        date: item.date,
-                        category: item.category,
-                        amount: item.amount,
-                        location: item.location,
-                        notes: item.notes
-                    })
+                    body: JSON.stringify({ password: currentPin, action: "deleteRecord", type: item.type, date: item.date, category: item.category, amount: item.amount, location: item.location, notes: item.notes })
                 });
                 const result = await response.json();
-                if (result.status === "success") {
-                    if (editingIndex === index) cancelEdit();
-                    await fetchLatestData();
-                }
+                if (result.status === "success") { if (editingIndex === index) cancelEdit(); await fetchLatestData(); }
             } catch(e) { alert("削除エラー"); }
             loadingStatus.style.display = "none";
         }
 
         addBtn.addEventListener('click', async () => {
-            const amount = amountInput.value;
-            const category = categorySelect.value;
-            const location = locationInput.value;
-            const notes = notesInput.value;
+            const amount = amountInput.value; const category = categorySelect.value; const location = locationInput.value; const notes = notesInput.value;
             const selectedDate = dateInput.value.replace(/-/g, '/');
             if (!amount || !selectedDate) return alert('入力内容を確認してください');
-            
-            addBtn.disabled = true;
-            addBtn.innerText = "暗号化同期中...";
-            
-            const payload = {
-                password: currentPin,
-                type: currentType,
-                category: category,
-                amount: amount,
-                location: location,
-                notes: notes,
-                customDate: selectedDate
-            };
-
-            if (editingIndex !== null) {
-                payload.action = "editRecord";
-                payload.oldDate = globalRecords[editingIndex].date;
-                payload.oldCategory = globalRecords[editingIndex].category;
-                payload.oldAmount = globalRecords[editingIndex].amount;
-                payload.oldLocation = globalRecords[editingIndex].location;
-                payload.oldNotes = globalRecords[editingIndex].notes;
-            }
-
+            addBtn.disabled = true; addBtn.innerText = "暗号化同期中...";
+            const payload = { password: currentPin, type: currentType, category: category, amount: amount, location: location, notes: notes, customDate: selectedDate };
             try {
                 const response = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
                 const result = await response.json();
-                if (result.status === "success") {
-                    cancelEdit(); 
-                    await fetchLatestData();
-                } else { alert(result.message); }
+                if (result.status === "success") { cancelEdit(); await fetchLatestData(); } else { alert(result.message); }
             } catch (e) { alert("送信エラー"); }
             addBtn.disabled = false;
         });
