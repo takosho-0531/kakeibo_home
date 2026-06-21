@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>家計簿</title>
-    <!-- Chart.js（グラフ描画用） -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -199,9 +198,12 @@
             font-size: 14px; 
             border: 1px solid var(--border); 
             border-left: 6px solid #ccc;
-            gap: 12px; /* 要素間のスキマを設けてギチギチ感を防ぐ */
+            gap: 12px; 
             box-sizing: border-box;
+            cursor: pointer; 
+            transition: background-color 0.2s;
         }
+        li:hover { background: #f8fafc; }
         li.ex-item { border-left-color: var(--expense); }
         li.in-item { border-left-color: var(--income); }
         
@@ -209,8 +211,8 @@
             display: flex; 
             flex-direction: column; 
             gap: 4px; 
-            flex: 1; /* 横幅いっぱいに広がるようにする */
-            min-width: 0; /* 文字省略(truncate)を機能させるために必要 */
+            flex: 1; 
+            min-width: 0; 
         }
         .item-category-line {
             display: flex;
@@ -230,34 +232,13 @@
             flex-direction: column; 
             align-items: flex-end; 
             gap: 6px; 
-            flex-shrink: 0; /* 幅が勝手に縮まないように固定 */
+            flex-shrink: 0; 
         }
         .item-amount-text {
             font-weight: 800; 
             font-size: 16px; 
             white-space: nowrap;
         }
-        .item-actions { 
-            display: flex; 
-            gap: 4px; 
-        }
-        .action-btn { 
-            background: #f1f5f9; 
-            border: 1px solid var(--border); 
-            cursor: pointer; 
-            padding: 6px 10px; 
-            font-size: 11px; 
-            border-radius: 6px; 
-            width: auto; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            gap: 2px;
-            font-weight: 600;
-        }
-        .action-btn:hover { background: #e2e8f0; }
-        .action-btn.edit { color: #2563eb; }
-        .action-btn.delete { color: #dc2626; }
         
         .loading { font-size: 14px; color: var(--text-light); text-align: center; display: none; margin-bottom: 10px; }
         .error-msg { color: var(--expense); font-size: 13px; margin-top: 10px; font-weight: 600; text-align: center; }
@@ -272,12 +253,85 @@
             font-size: 10px; 
             font-weight: 600; 
             display: inline-block;
-            max-width: 130px; /* 長い店名を省略 */
+            max-width: 130px; 
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
         .text-notes { color: var(--text-light); font-size: 11px; display: block; margin-top: 2px; }
+
+        /* ─── 詳細モーダルウィンドウのスタイル ─── */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0; visibility: hidden;
+            transition: all 0.3s ease;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+        .modal-overlay.active {
+            opacity: 1; visibility: visible;
+        }
+        .modal-content {
+            background: var(--card);
+            width: 100%;
+            max-width: 380px;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            padding: 24px;
+            box-sizing: border-box;
+            position: relative;
+            animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes modalIn {
+            from { transform: scale(0.9) translateY(20px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .modal-title { font-size: 18px; font-weight: 800; }
+        
+        /* ⋯ 三点リーダーボタンとメニュー */
+        .menu-container { position: relative; }
+        .menu-trigger {
+            background: none; border: none; font-size: 20px; cursor: pointer; padding: 4px 8px; color: var(--text-light); border-radius: 50%; width: auto;
+        }
+        .menu-trigger:hover { background: #f1f5f9; color: var(--text); }
+        .dropdown-menu {
+            position: absolute; top: 100%; right: 0; background: white; border: 1px solid var(--border);
+            border-radius: 10px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); width: 100px; display: none; z-index: 1010; overflow: hidden;
+        }
+        .dropdown-menu button {
+            background: none; border: none; border-radius: 0; padding: 10px 14px; font-size: 13px; text-align: left; cursor: pointer; width: 100%; font-weight: 600;
+        }
+        .dropdown-menu button:hover { background: #f8fafc; }
+        .dropdown-menu button.menu-edit { color: #2563eb; }
+        .dropdown-menu button.menu-delete { color: #dc2626; }
+        .dropdown-menu button.menu-copy { color: #16a34a; }
+
+        .modal-body { display: flex; flex-direction: column; gap: 14px; font-size: 14px; }
+        .modal-row { display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; }
+        .modal-row:last-child { border-bottom: none; }
+        .modal-label { font-size: 11px; color: var(--text-light); font-weight: 700; }
+        .modal-value { font-weight: 600; font-size: 15px; }
+        .modal-value.amount { font-size: 20px; font-weight: 800; }
+        
+        .modal-close-btn {
+            margin-top: 10px; background: #f1f5f9; color: var(--text); border: none; font-weight: 700; cursor: pointer;
+        }
+        .modal-close-btn:hover { background: #e2e8f0; }
     </style>
 </head>
 <body class="auth-mode">
@@ -303,12 +357,9 @@
             <button type="button" id="btn-income" class="type-btn">収入</button>
         </div>
 
-        <!-- 📸 タップするとOS標準のファイル選択（カメラ / 写真アルバム）が直接起動します -->
         <div id="receipt-area" class="receipt-zone">
             <span class="receipt-icon" id="receipt-status-icon">📸</span>
             <span class="receipt-text" id="receipt-status-text">レシートを撮影して自動入力</span>
-            
-            <!-- capture属性をつけないことで、カメラとアルバムの選択をOSが勝手にやってくれます -->
             <input type="file" id="receipt-file" accept="image/*" style="display: none;">
         </div>
 
@@ -360,8 +411,46 @@
         <ul id="history-list"></ul>
     </div>
 
+    <div id="detail-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">📄 取引の詳細</div>
+                <div class="menu-container">
+                    <button id="menu-trigger-btn" class="menu-trigger">⋯</button>
+                    <div id="dropdown-menu" class="dropdown-menu">
+                        <button class="menu-edit" id="modal-edit-btn">✏️ 編集</button>
+                        <button class="menu-copy" id="modal-copy-btn">📋 複製</button>
+                        <button class="menu-delete" id="modal-delete-btn">🗑️ 削除</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="modal-row">
+                    <span class="modal-label">種別 / カテゴリー</span>
+                    <span id="modal-category" class="modal-value">--</span>
+                </div>
+                <div class="modal-row">
+                    <span class="modal-label">金額</span>
+                    <span id="modal-amount" class="modal-value amount">--</span>
+                </div>
+                <div class="modal-row">
+                    <span class="modal-label">日付</span>
+                    <span id="modal-date" class="modal-value">--</span>
+                </div>
+                <div class="modal-row">
+                    <span class="modal-label">場所 / 店舗</span>
+                    <span id="modal-location" class="modal-value">--</span>
+                </div>
+                <div class="modal-row">
+                    <span class="modal-label">メモ</span>
+                    <span id="modal-notes" class="modal-value" style="white-space: pre-wrap;">--</span>
+                </div>
+            </div>
+            <button id="modal-close-btn" class="modal-close-btn">閉じる</button>
+        </div>
+    </div>
+
     <script>
-        // ⚠️ 新しいデプロイ後のURLにここを書き換えてください
         const API_URL = "https://script.google.com/macros/s/AKfycbx16M_ERJ44cW-KMrdA3fYsdQREye735vUALtu5Q_hEpzka3HSRie3l3VtAKC11KJI2PQ/exec";
         
         let currentPin = "";
@@ -371,6 +460,7 @@
         let myChart = null;
         let editingIndex = null; 
         let drillDownCategory = null; 
+        let selectedRecordIndex = null; 
 
         const authBox = document.getElementById('auth-box');
         const appBox = document.getElementById('app-box');
@@ -400,6 +490,15 @@
         const chartTitle = document.getElementById('chart-title');
         const chartBackBtn = document.getElementById('chart-back-btn');
         const chartTipText = document.getElementById('chart-tip-text');
+
+        // モーダル関連の要素
+        const detailModal = document.getElementById('detail-modal');
+        const menuTriggerBtn = document.getElementById('menu-trigger-btn');
+        const dropdownMenu = document.getElementById('dropdown-menu');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+        const modalEditBtn = document.getElementById('modal-edit-btn');
+        const modalCopyBtn = document.getElementById('modal-copy-btn');
+        const modalDeleteBtn = document.getElementById('modal-delete-btn');
 
         function initPeriodSelectors() {
             const now = new Date();
@@ -432,7 +531,7 @@
             if(list.length === 0) {
                 const opt = document.createElement('option');
                 opt.value = "その他";
-                opt.innerText = "その他";
+                opt.innerText = "other";
                 categorySelect.appendChild(opt);
                 return;
             }
@@ -471,20 +570,17 @@
             updateUI(globalRecords);
         });
 
-        // タップした時に非表示のinput[type="file"]を直接クリックし、OS標準のメニューを表示させます
         receiptArea.addEventListener('click', () => {
             if (receiptStatusText.innerText.includes("解析中") || receiptStatusText.innerText.includes("処理中")) return;
             receiptFile.click();
         });
 
-        // 🖼️ 画像ファイルをブラウザ側で素早くリサイズし、Base64データ化してGASへ直送する処理
         async function processReceiptFile(file) {
             receiptStatusIcon.innerText = "⏳";
             receiptStatusText.innerText = "画像を処理中...";
             receiptArea.style.background = "#f1f5f9";
             
             try {
-                // 画像をブラウザで読み込み
                 const base64Raw = await new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onload = (e) => resolve(e.target.result);
@@ -492,27 +588,21 @@
                     reader.readAsDataURL(file);
                 });
 
-                // Googleサーバーへの送信時間を最速にするため、Canvasで画像を軽量にリサイズ・圧縮します
                 const compressedBase64 = await new Promise((resolve, reject) => {
                     const img = new Image();
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
                         let width = img.width;
                         let height = img.height;
-                        
-                        // GoogleのOCRに最適な幅にリサイズしてデータ量を減らします
                         const MAX_WIDTH = 800;
                         if (width > MAX_WIDTH) {
                             height = Math.round(height * (MAX_WIDTH / width));
                             width = MAX_WIDTH;
                         }
-
                         canvas.width = width;
                         canvas.height = height;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
-
-                        // 画質を少し落としてデータ送信サイズを10分の1以下に圧縮
                         resolve(canvas.toDataURL('image/jpeg', 0.7));
                     };
                     img.onerror = (err) => reject(err);
@@ -520,8 +610,6 @@
                 });
 
                 receiptStatusText.innerText = "Google高速AIがレシートを解析中...";
-
-                // リサイズしたBase64文字列（プレフィックス "data:image/jpeg;base64," を除く純粋なデータ部分）をGASにPOST
                 const base64DataOnly = compressedBase64.split(',')[1];
 
                 const response = await fetch(API_URL, {
@@ -529,30 +617,21 @@
                     body: JSON.stringify({
                         password: currentPin,
                         action: "analyzeReceipt",
-                        imageBlob: base64DataOnly // GASの超高速Google OCRへ直接画像を渡す
+                        imageBlob: base64DataOnly
                     })
                 });
                 
                 const result = await response.json();
                 
                 if (result.status === "success") {
-                    // 金額、店舗名、日付の自動割り当て
                     if (result.amount && result.amount !== "0") amountInput.value = result.amount;
                     if (result.location) locationInput.value = result.location;
-                    
-                    // notes項目が安全に定義されているか確認
-                    if (result.notes) {
-                        notesInput.value = result.notes;
-                    } else {
-                        notesInput.value = "";
-                    }
-                    
+                    if (result.notes) { notesInput.value = result.notes; } else { notesInput.value = ""; }
                     if (result.date) {
                         const formattedDate = result.date.replace(/\//g, '-');
                         dateInput.value = formattedDate;
                     }
                     
-                    // スプレッドシートの設定からAIが判定した最適なカテゴリをマッチングして選択
                     if (result.category) {
                         let exists = false;
                         for (let i = 0; i < categorySelect.options.length; i++) {
@@ -570,23 +649,21 @@
                             categorySelect.value = result.category;
                         }
                     }
-                    
                     alert("✨ 解析大成功！すべての項目を自動入力しました。確認して「記録」を押してください！");
                 } else {
-                    alert("AIによるデータ整理に失敗しました。手入力をお試しください。\nエラー: " + (result.message || "スプレッドシートやAPIの設定を確認してください。"));
+                    alert("AIによるデータ整理に失敗しました。手入力をお試しください。\nエラー: " + (result.message || "設定を確認してください。"));
                 }
             } catch(err) {
-                alert("通信エラーが発生しました。インターネット環境をお確かめいただくか、GASのウェブアプリURLが正しく公開（全員アクセス可能）になっているかご確認ください。");
+                alert("通信エラーが発生しました。インターネット環境をお確かめください。");
                 console.error(err);
             } finally {
                 receiptStatusIcon.innerText = "📸";
                 receiptStatusText.innerText = "レシートを撮影して自動入力";
                 receiptArea.style.background = "#f8fafc";
-                receiptFile.value = ""; // 入力値をリセットして再アップロード可能に
+                receiptFile.value = "";
             }
         }
 
-        // OS標準のダイアログからファイルが選ばれた瞬間に起動
         receiptFile.addEventListener('change', (e) => {
             if (e.target.files.length === 0) return;
             processReceiptFile(e.target.files[0]);
@@ -833,15 +910,114 @@
                         <span class="item-amount-text" style="color: ${priceColor};">
                             ${prefix}${Number(r.amount).toLocaleString()} 円
                         </span>
-                        <div class="item-actions">
-                            <button class="action-btn edit" onclick="startEdit(${realIndex})">✏️</button>
-                            <button class="action-btn delete" onclick="deleteRecord(${realIndex})">🗑️</button>
-                        </div>
                     </div>
                 `;
+
+                li.addEventListener('click', () => {
+                    openDetailModal(realIndex);
+                });
+
                 historyList.appendChild(li);
             });
         }
+
+        // ─── モーダル制御ロジック ───
+        function openDetailModal(index) {
+            selectedRecordIndex = index;
+            const record = globalRecords[index];
+            
+            document.getElementById('modal-category').innerText = `[${record.type}] ${record.category || 'その他'}`;
+            
+            const prefix = record.type === "支出" ? "-" : "+";
+            const color = record.type === "支出" ? "var(--expense)" : "var(--income)";
+            const amountEl = document.getElementById('modal-amount');
+            amountEl.innerText = `${prefix}${Number(record.amount).toLocaleString()} 円`;
+            amountEl.style.color = color;
+
+            document.getElementById('modal-date').innerText = record.date;
+            document.getElementById('modal-location').innerText = record.location || '未登録';
+            document.getElementById('modal-notes').innerText = record.notes || 'なし';
+
+            dropdownMenu.style.display = "none";
+            detailModal.classList.add('active');
+        }
+
+        function closeDetailModal() {
+            detailModal.classList.remove('active');
+            dropdownMenu.style.display = "none";
+            selectedRecordIndex = null;
+        }
+
+        menuTriggerBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isDisplayed = dropdownMenu.style.display === "block";
+            dropdownMenu.style.display = isDisplayed ? "none" : "block";
+        });
+
+        modalCloseBtn.addEventListener('click', closeDetailModal);
+        detailModal.addEventListener('click', (e) => {
+            if (e.target === detailModal) closeDetailModal();
+        });
+        document.addEventListener('click', () => {
+            dropdownMenu.style.display = "none";
+        });
+
+        // モーダル内の「編集」
+        modalEditBtn.addEventListener('click', () => {
+            if (selectedRecordIndex !== null) {
+                const idx = selectedRecordIndex;
+                closeDetailModal();
+                startEdit(idx);
+            }
+        });
+
+        // モーダル内の「削除」
+        modalDeleteBtn.addEventListener('click', async () => {
+            if (selectedRecordIndex !== null) {
+                const idx = selectedRecordIndex;
+                closeDetailModal();
+                await deleteRecord(idx);
+            }
+        });
+
+        // モーダル内の「複製」
+        modalCopyBtn.addEventListener('click', () => {
+            if (selectedRecordIndex !== null) {
+                const item = globalRecords[selectedRecordIndex];
+                closeDetailModal();
+
+                // 編集モードを一旦クリアして新規作成状態にする
+                cancelEdit();
+
+                // 選択されているタイプ（支出/収入）を合わせてUI更新
+                if (item.type !== currentType) {
+                    if (item.type === "支出") {
+                        btnExpense.click();
+                    } else {
+                        btnIncome.click();
+                    }
+                }
+
+                // 日付は「今日」
+                setTodayDate();
+                
+                // 【変更点】金額はクリア（空っぽ）にする
+                amountInput.value = '';
+
+                // その他（項目・店舗・メモ）を引き継ぐ
+                categorySelect.value = item.category;
+                locationInput.value = item.location || '';
+                notesInput.value = item.notes || '';
+
+                // フォームへスクロール
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                
+                // 入力欄にフォーカスを当てる
+                amountInput.focus();
+                
+                alert("📋 データを複製しました（金額は新しく入力してください）。内容を確認して記録ボタンを押してください。");
+            }
+        });
 
         function startEdit(index) {
             editingIndex = index;
